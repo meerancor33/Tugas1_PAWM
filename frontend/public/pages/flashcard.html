@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcard - Virtual Learning</title>
+    <link rel="stylesheet" href="../styles/flashcard.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Virtual Learning</h1>
+            <ul class="nav-menu">
+                <li><a href="welcome.html" class="nav-link">Beranda</a></li>
+                <li><a href="periodic_table.html" class="nav-link">Tabel Periodik</a></li>
+                <li><a href="flashcard.html" class="nav-link active">Flashcard</a></li>
+                <li><a href="quiz.html" class="nav-link">Kuis</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <h1 class="page-title">Flashcard Pembelajaran Kimia</h1>
+            <p class="page-subtitle">Klik kartu untuk melihat jawaban</p>
+            
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <h3 id="question">Apa simbol kimia untuk Emas?</h3>
+                        </div>
+                        <div class="flashcard-back">
+                            <h3 id="answer">Au (dari bahasa Latin: Aurum)</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="prevBtn" class="btn btn-secondary">← Sebelumnya</button>
+                <span id="cardCounter" class="card-counter">1 / 10</span>
+                <button id="nextBtn" class="btn btn-primary">Selanjutnya →</button>
+            </div>
+
+            <div class="progress-bar">
+                <div id="progress" class="progress-fill"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../scripts/flashcard-script.js"></script>
+</body>
+</html>

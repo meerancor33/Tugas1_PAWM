@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis - Virtual Learning</title>
+    <link rel="stylesheet" href="../styles/quiz.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">Virtual Learning</h1>
+            <ul class="nav-menu">
+                <li><a href="welcome.html" class="nav-link">Beranda</a></li>
+                <li><a href="periodic_table.html" class="nav-link">Tabel Periodik</a></li>
+                <li><a href="flashcard.html" class="nav-link">Flashcard</a></li>
+                <li><a href="quiz.html" class="nav-link active">Kuis</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <div id="quiz-start" class="quiz-section">
+                <h1 class="page-title">Kuis Kimia</h1>
+                <p class="page-subtitle">Uji pengetahuan kimia Anda dengan 5 pertanyaan</p>
+                <button id="startBtn" class="btn btn-primary">Mulai Kuis</button>
+            </div>
+
+            <div id="quiz-question" class="quiz-section hidden">
+                <div class="quiz-header">
+                    <div class="question-counter">
+                        <span id="currentQuestion">1</span> / <span id="totalQuestions">5</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressBar" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="question-container">
+                    <h2 id="questionText">Pertanyaan akan muncul di sini</h2>
+                    <div id="answerOptions" class="answer-options">
+                        <!-- Options will be inserted here -->
+                    </div>
+                </div>
+
+                <button id="nextBtn" class="btn btn-primary hidden">Selanjutnya</button>
+            </div>
+
+            <div id="quiz-result" class="quiz-section hidden">
+                <h1 class="page-title">Hasil Kuis</h1>
+                <div class="result-container">
+                    <div class="score-circle">
+                        <span id="finalScore">0</span>
+                        <span class="score-label">/ 5</span>
+                    </div>
+                    <p id="resultMessage" class="result-message"></p>
+                    <div class="result-actions">
+                        <button id="restartBtn" class="btn btn-primary">Ulangi Kuis</button>
+                        <a href="welcome.html" class="btn btn-secondary">Kembali ke Beranda</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../scripts/quiz-script.js"></script>
+</body>
+</html>
