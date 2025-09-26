@@ -12,25 +12,79 @@
             <h1 class="nav-logo">Virtual Learning</h1>
             <ul class="nav-menu">
                 <li><a href="welcome.html" class="nav-link">Beranda</a></li>
+                <li><a href="pembelajaran.html" class="nav-link">Pembelajaran</a></li>
                 <li><a href="periodic_table.html" class="nav-link">Tabel Periodik</a></li>
                 <li><a href="flashcard.html" class="nav-link">Flashcard</a></li>
                 <li><a href="quiz.html" class="nav-link active">Kuis</a></li>
+                <li><a href="games.html" class="nav-link">Games</a></li>
             </ul>
         </div>
     </nav>
 
     <main class="main-content">
         <div class="container">
-            <div id="quiz-start" class="quiz-section">
+            <div id="module-selection" class="quiz-section">
+                <h1 class="page-title">Pilih Modul Kuis</h1>
+                <p class="page-subtitle">Pilih modul yang ingin Anda uji</p>
+                <div class="modules-grid">
+                    <div class="module-option" data-module="0">
+                        <h3>Modul 1: Atom dan Molekul</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="1">
+                        <h3>Modul 2: Ikatan Kimia dan Struktur</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="2">
+                        <h3>Modul 3: Struktur Atom dan Sistem Periodik</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="3">
+                        <h3>Modul 4: Molekul, Mol, dan Persamaan Kimia</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="4">
+                        <h3>Modul 5: Stoikiometri</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="5">
+                        <h3>Modul 6: Gas</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="6">
+                        <h3>Modul 7: Molekul dan Material</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="7">
+                        <h3>Modul 8: Termokimia</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="8">
+                        <h3>Modul 9: Elektrokimia</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="9">
+                        <h3>Modul 10: Termodinamika</h3>
+                        <p>10 Soal</p>
+                    </div>
+                    <div class="module-option" data-module="10">
+                        <h3>Modul 11: Kesetimbangan Kimia</h3>
+                        <p>10 Soal</p>
+                    </div>
+                </div>
+                <button id="allModulesBtn" class="btn btn-secondary">Kuis Semua Modul (110 Soal)</button>
+            </div>
+            <div id="quiz-start" class="quiz-section hidden">
                 <h1 class="page-title">Kuis Kimia</h1>
-                <p class="page-subtitle">Uji pengetahuan kimia Anda dengan 5 pertanyaan</p>
+                <p id="quiz-subtitle" class="page-subtitle">Uji pengetahuan kimia Anda</p>
                 <button id="startBtn" class="btn btn-primary">Mulai Kuis</button>
+                <button id="backToModules" class="btn btn-secondary">Kembali ke Menu</button>
             </div>
 
             <div id="quiz-question" class="quiz-section hidden">
                 <div class="quiz-header">
                     <div class="question-counter">
-                        <span id="currentQuestion">1</span> / <span id="totalQuestions">5</span>
+                        <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span>
                     </div>
                     <div class="progress-bar">
                         <div id="progressBar" class="progress-fill"></div>
@@ -40,7 +94,6 @@
                 <div class="question-container">
                     <h2 id="questionText">Pertanyaan akan muncul di sini</h2>
                     <div id="answerOptions" class="answer-options">
-                        <!-- Options will be inserted here -->
                     </div>
                 </div>
 
@@ -52,12 +105,12 @@
                 <div class="result-container">
                     <div class="score-circle">
                         <span id="finalScore">0</span>
-                        <span class="score-label">/ 5</span>
+                        <span class="score-label" id="scoreTotal">/ 10</span>
                     </div>
                     <p id="resultMessage" class="result-message"></p>
                     <div class="result-actions">
                         <button id="restartBtn" class="btn btn-primary">Ulangi Kuis</button>
-                        <a href="welcome.html" class="btn btn-secondary">Kembali ke Beranda</a>
+                        <button id="backToModulesFromResult" class="btn btn-secondary">Pilih Modul Lain</button>
                     </div>
                 </div>
             </div>

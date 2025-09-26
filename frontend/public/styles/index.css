@@ -110,25 +110,17 @@ body {
   display: inline-block;
 }
 
-.btn-primary {
-  background: linear-gradient(45deg, #64b5f6, #42a5f5);
-  color: #ffffff;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(100, 181, 246, 0.3);
-}
-
-.btn-secondary {
+.btn {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.btn-secondary:hover {
+.btn:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(100, 181, 246, 0.2);
+  border-color: rgba(100, 181, 246, 0.3);
 }
 
 /* Features Section */

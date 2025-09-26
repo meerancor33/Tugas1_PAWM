@@ -1,39 +1,36 @@
 // Function to navigate to simulation links
 function navigateToSimulation(topic) {
   const simulationUrls = {
-    atom: "https://phet.colorado.edu/sims/html/build-an-atom/latest/build-an-atom_en.html",
-    ikatan: "https://phet.colorado.edu/sims/html/molecule-polarity/latest/molecule-polarity_en.html",
-    stoikiometri:
-      "https://phet.colorado.edu/sims/html/reactants-products-and-leftovers/latest/reactants-products-and-leftovers_en.html",
-    larutan: "https://phet.colorado.edu/sims/html/concentration/latest/concentration_en.html",
-    termokimia: "https://phet.colorado.edu/sims/html/energy-forms-and-changes/latest/energy-forms-and-changes_en.html",
-    elektrokimia:
-      "https://phet.colorado.edu/sims/html/battery-resistor-circuit/latest/battery-resistor-circuit_en.html",
-    laju: "https://phet.colorado.edu/sims/html/reactions-and-rates/latest/reactions-and-rates_en.html",
-    kesetimbangan: "https://phet.colorado.edu/sims/html/reversible-reactions/latest/reversible-reactions_en.html",
-    organik: "https://phet.colorado.edu/sims/html/molecule-shapes/latest/molecule-shapes_en.html",
-    analitik: "https://phet.colorado.edu/sims/html/ph-scale/latest/ph-scale_en.html",
-    lingkungan: "https://phet.colorado.edu/sims/html/greenhouse-effect/latest/greenhouse-effect_en.html",
+    atom: "https://www.labxchange.org/topic/chemistry-middle-the-atom",
+    ikatan: "https://www.labxchange.org/library/pathway/lx-pathway:b2cd0ddb-06d8-4e98-8092-7f739ddaff9e",
+    periodik: "https://www.labxchange.org/topic/chemistry-high-periodic-table",
+    persamaan: "https://www.labxchange.org/topic/chemistry-middle-chemical-reactions",
+    stoikiometri: "https://www.labxchange.org/library/pathway/lx-pathway:35d5f88c-b419-4229-ae5f-156defaff820?source=%2Flibrary%2Fclusters%2Flx-cluster%3AChemistryResources",
+    gas: "https://www.labxchange.org/library/pathway/lx-pathway:1f255415-8ff3-426c-a8ce-67ed82e4cd6e?source=%2Flibrary%2Fclusters%2Flx-cluster%3AChemistryResources",
+    material: "https://www.labxchange.org/library/pathway/lx-pathway:dcac15e7-3352-444b-be81-21c79ed90686?source=%2Flibrary%2Fclusters%2Flx-cluster%3AChemistryResources",
+    termokimia: "https://www.labxchange.org/library/pathway/lx-pathway:635b966f-3e45-492a-b51f-a2836bc1889b",
+    elektrokimia: "https://www.labxchange.org/library/pathway/lx-pathway:b5ead353-ffc4-4505-b899-5181e42cc52b?source=%2Flibrary%2Fclusters%2Flx-cluster%3AChemistryResources",
+    termodinamika: "https://phet.colorado.edu/in/simulations/reversible-reactions",
+    kesetimbangan: "https://www.labxchange.org/library/pathway/lx-pathway:0eeeecfb-60ae-4dfb-8e93-7b68725f4be9",
   }
 
   const url = simulationUrls[topic] || "https://phet.colorado.edu/in/simulations/filter?subjects=chemistry&type=html"
   window.open(url, "_blank")
 }
-
 // Function to navigate to video links
 function navigateToVideo(topic) {
   const videoUrls = {
-    atom: "https://www.youtube.com/watch?v=example-atom-video",
-    ikatan: "https://www.youtube.com/watch?v=example-ikatan-video",
-    stoikiometri: "https://www.youtube.com/watch?v=example-stoikiometri-video",
-    larutan: "https://www.youtube.com/watch?v=example-larutan-video",
-    termokimia: "https://www.youtube.com/watch?v=example-termokimia-video",
-    elektrokimia: "https://www.youtube.com/watch?v=example-elektrokimia-video",
-    laju: "https://www.youtube.com/watch?v=example-laju-video",
-    kesetimbangan: "https://www.youtube.com/watch?v=example-kesetimbangan-video",
-    organik: "https://www.youtube.com/watch?v=example-organik-video",
-    analitik: "https://www.youtube.com/watch?v=example-analitik-video",
-    lingkungan: "https://www.youtube.com/watch?v=example-lingkungan-video",
+    atom: "https://youtu.be/HQmSM0X3U8g?si=75Eawj5JPIieqF_O",
+    ikatan: "https://youtube.com/playlist?list=PLAKmNBIaTKUeo44Ez523OVmXMAbQQby62&si=SUPY5rxCkMmAbvyY",
+    periodik: "https://youtu.be/yoBF5eNQlCc?si=tBhAVlypETv66Ge5",
+    persamaan: "https://youtu.be/MuGG4rVmA7E?si=YMkzoJY9yj6y-Cp2",
+    stoikiometri: "https://youtu.be/TCXiEtgFh5s?si=wzmjbUyjaSJwr97F",
+    gas: "https://youtu.be/U_nknq-zHRI?si=DqrwHN-_1Af8NISp",
+    material: "https://youtu.be/sA7DoBlEI2k?si=ucRA6fva4Q9gNmQn",
+    termokimia: "https://youtube.com/playlist?list=PL2PAgVsFqpcCOUvvOV1frvPP47nxsaHtB&si=jbDGU-jpvwzzFift",
+    elektrokimia: "https://youtu.be/SeJGDSPftdU?si=7naOI6vOFdTPNjZA",
+    termodinamika: "https://youtu.be/m3N3uHLniic?si=Y0NXz0ZiMRvfhRvx",
+    kesetimbangan: "https://youtu.be/iyxnS2UJ3JM?si=HbNj-jbBNsbzrzjv",
   }
 
   const url = videoUrls[topic] || "https://www.youtube.com/results?search_query=kimia+" + topic
@@ -43,26 +40,26 @@ function navigateToVideo(topic) {
 // Function to navigate to PDF links
 function navigateToPDF(topic) {
   const pdfUrls = {
-    atom: "https://example.com/pdf/modul-struktur-atom.pdf",
-    ikatan: "https://example.com/pdf/modul-ikatan-kimia.pdf",
-    stoikiometri: "https://example.com/pdf/modul-stoikiometri.pdf",
-    larutan: "https://example.com/pdf/modul-larutan.pdf",
-    termokimia: "https://example.com/pdf/modul-termokimia.pdf",
-    elektrokimia: "https://example.com/pdf/modul-elektrokimia.pdf",
-    laju: "https://example.com/pdf/modul-laju-reaksi.pdf",
-    kesetimbangan: "https://example.com/pdf/modul-kesetimbangan-kimia.pdf",
-    organik: "https://example.com/pdf/modul-kimia-organik.pdf",
-    analitik: "https://example.com/pdf/modul-kimia-analitik.pdf",
-    lingkungan: "https://example.com/pdf/modul-kimia-lingkungan.pdf",
+    atom: "/pdf/modul-kimia-atom.pdf",
+    ikatan: "../pdf/modul-kimia-ikatan.pdf",
+    periodik: "../pdf/modul-kimia-periodik.pdf",
+    persamaan: "../pdf/modul-kimia-persamaan.pdf",
+    stoikiometri: "../pdf/modul-kimia-stoikiometri.pdf",
+    gas: "../pdf/modul-kimia-gas.pdf",
+    material: "../pdf/modul-kimia-material.pdf",
+    termokimia: "../pdf/modul-kimia-termokimia.pdf",
+    elektrokimia: "../pdf/modul-kimia-elektrokimia.pdf",
+    termodinamika: "../pdf/modul-kimia-termodinamika.pdf",
+    kesetimbangan: "../pdf/modul-kimia-kesetimbangan.pdf",
   }
 
-  const url = pdfUrls[topic] || "https://example.com/pdf/modul-kimia-" + topic + ".pdf"
-  window.open(url, "_blank")
+    const url = pdfUrls[topic.toLowerCase()] || `../pdf/modul-kimia-${topic.toLowerCase()}.pdf`;
+  window.open(url, "_blank");
 }
 
 // General function to navigate to any link
 function navigateToLink(url) {
-  window.open(url, "_blank")
+  window.open(url, "_blank");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -73,15 +70,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const topics = [
       "atom",
       "ikatan",
+      "periodik",
+      "persamaan",
       "stoikiometri",
-      "larutan",
+      "gas",
+      "material",
       "termokimia",
       "elektrokimia",
-      "laju",
+      "termodinamika",
       "kesetimbangan",
-      "organik",
-      "analitik",
-      "lingkungan",
     ]
     const currentTopic = topics[index]
 

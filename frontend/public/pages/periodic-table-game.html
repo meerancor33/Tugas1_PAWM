@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Periodic Table Drag & Drop</title>
+  <link rel="stylesheet" href="../styles/index.css"/>
+  <link rel="stylesheet" href="../styles/periodic-table-game.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <h1 class="nav-logo">Virtual Learning</h1>
+      <ul class="nav-menu">
+        <li><a href="welcome.html" class="nav-link">Beranda</a></li>
+        <li><a href="pembelajaran.html" class="nav-link">Pembelajaran</a></li>
+        <li><a href="periodic_table.html" class="nav-link">Tabel Periodik</a></li>
+        <li><a href="flashcard.html" class="nav-link">Flashcard</a></li>
+        <li><a href="quiz.html" class="nav-link">Kuis</a></li>
+        <li><a href="games.html" class="nav-link active">Games</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="ptg-container">
+    <section class="ptg-header">
+      <h1 class="ptg-title">Periodic Table Drag & Drop</h1>
+      <p class="ptg-subtitle">Seret unsur ke posisi yang benar di tabel periodik.</p>
+    </section>
+
+    <section class="ptg-grid-card">
+      <div id="periodic-table-grid" class="periodic-table-grid"></div>
+    </section>
+
+    <section class="ptg-drag-card">
+      <div id="draggable-elements" class="draggable-elements">
+        <h2>Elements to Drag</h2>
+      </div>
+      <div id="feedback" class="feedback"></div>
+      <button id="reset-game" class="btn btn-secondary">Reset Game</button>
+    </section>
+  </main>
+
+  <script src="../scripts/periodic-table-game.js"></script>
+</body>
+</html>

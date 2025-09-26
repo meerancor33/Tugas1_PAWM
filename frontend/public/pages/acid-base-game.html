@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Acid-Base Mixer</title>
+  <link rel="stylesheet" href="../styles/index.css"/>
+  <link rel="stylesheet" href="../styles/acid-base-game.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <h1 class="nav-logo">Virtual Learning</h1>
+      <ul class="nav-menu">
+        <li><a href="welcome.html" class="nav-link">Beranda</a></li>
+        <li><a href="pembelajaran.html" class="nav-link">Pembelajaran</a></li>
+        <li><a href="periodic_table.html" class="nav-link">Tabel Periodik</a></li>
+        <li><a href="flashcard.html" class="nav-link">Flashcard</a></li>
+        <li><a href="quiz.html" class="nav-link">Kuis</a></li>
+        <li><a href="games.html" class="nav-link active">Games</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="abg-container">
+    <section class="abg-header">
+      <h1 class="abg-title">Acid-Base Mixer</h1>
+      <p class="abg-subtitle">Campurkan asam dan basa untuk melihat pH, warna, dan persamaan reaksi netralisasi.</p>
+    </section>
+
+    <section class="input-card">
+      <div class="compound-input">
+        <label for="acid-input">Acid</label>
+        <select id="acid-input">
+          <option value="HCl">Hydrochloric Acid (HCl)</option>
+          <option value="HBr">Hydrobromic Acid (HBr)</option>
+          <option value="HNO3">Nitric Acid (H&#8322;NO&#8323; → HNO<sub>3</sub>)</option>
+          <option value="H2SO4">Sulfuric Acid (H<sub>2</sub>SO<sub>4</sub>)</option>
+          <option value="H3PO4">Phosphoric Acid (H<sub>3</sub>PO<sub>4</sub>)</option>
+          <option value="CH3COOH">Acetic Acid (CH&#8323;COOH)</option>
+          <option value="HF">Hydrofluoric Acid (HF)</option>
+          <option value="H2CO3">Carbonic Acid (H<sub>2</sub>CO<sub>3</sub>)</option>
+        </select>
+      </div>
+      <div class="compound-input">
+        <label for="base-input">Base</label>
+        <select id="base-input">
+          <option value="NaOH">Sodium Hydroxide (NaOH)</option>
+          <option value="KOH">Potassium Hydroxide (KOH)</option>
+          <option value="Ca(OH)2">Calcium Hydroxide (Ca(OH)<sub>2</sub>)</option>
+          <option value="Ba(OH)2">Barium Hydroxide (Ba(OH)<sub>2</sub>)</option>
+          <option value="Mg(OH)2">Magnesium Hydroxide (Mg(OH)<sub>2</sub>)</option>
+          <option value="NH3">Ammonia (NH<sub>3</sub>, aq)</option>
+          <option value="Na2CO3">Sodium Carbonate (Na<sub>2</sub>CO<sub>3</sub>)</option>
+        </select>
+      </div>
+      <div class="input-actions">
+        <button id="mix-button" class="btn btn-primary">Mix!</button>
+        <button id="reset-button" class="btn btn-secondary">Reset</button>
+      </div>
+    </section>
+
+    <section class="beakers-card">
+      <div class="beaker" id="beaker-acid">
+        <div class="liquid" id="liquid-acid" style="background-color: #f08080;"></div>
+        <span class="label">Acid</span>
+      </div>
+      <div class="beaker" id="beaker-base">
+        <div class="liquid" id="liquid-base" style="background-color: #87cefa;"></div>
+        <span class="label">Base</span>
+      </div>
+      <div class="beaker result-beaker" id="beaker-result">
+        <div class="liquid" id="liquid-result" style="background-color: #ccc;"></div>
+        <span class="label">Result</span>
+      </div>
+    </section>
+
+    <section id="result-info" class="result-info">
+      <p>Mix an acid and a base to see the reaction!</p>
+    </section>
+  </main>
+
+  <script src="../scripts/acid-base-game.js"></script>
+</body>
+</html>

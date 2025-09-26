@@ -1,0 +1,206 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background-color: #f4f7f6;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.header nav a {
+  color: #ecf0f1;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.header nav a:hover {
+  background-color: #34495e;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 2rem auto;
+  gap: 2rem;
+}
+
+.ptg-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.ptg-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.ptg-title {
+  font-size: 2rem;
+  color: #64b5f6;
+  margin: 0 0 0.5rem 0;
+}
+
+.ptg-subtitle {
+  color: #b0bec5;
+  margin: 0;
+}
+
+.ptg-grid-card
+ {
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+  margin-bottom: 1.5rem;
+ }
+.ptg-drag-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+  margin-bottom: 1.5rem;
+}
+
+/* Grid styling */
+.periodic-table-grid {
+  display: grid;
+  grid-template-columns: repeat(18, 60px);
+  gap: 6px;
+}
+
+.element-cell {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #e6f2ff;
+  background: rgba(100, 181, 246, 0.15);
+  border: 1px solid rgba(100, 181, 246, 0.25);
+  transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.element-cell.filled {
+  background: rgba(100, 181, 246, 0.22);
+  border-color: rgba(100, 181, 246, 0.4);
+}
+
+.element-cell.empty {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(100, 181, 246, 0.45);
+}
+
+.element-cell.correct {
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.5) inset;
+}
+
+.element-cell.incorrect {
+  box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.5) inset;
+}
+
+.element-symbol {
+  font-size: 1.1rem;
+}
+.element-name {
+  font-size: 0.65rem;
+  color: #cfd8dc;
+}
+
+/* Draggable pool */
+.draggable-elements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.draggable-elements h2 {
+  width: 100%;
+  text-align: center;
+  color: #64b5f6;
+}
+
+.draggable-element {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  background: linear-gradient(45deg, #64b5f6, #42a5f5);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.draggable-element:active {
+  cursor: grabbing;
+  transform: scale(1.04);
+}
+
+.feedback {
+  text-align: center;
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+/* Hover cues */
+.element-cell.hovered {
+  transform: translateY(-1px);
+  border-color: #64b5f6;
+  box-shadow: 0 4px 14px rgba(100, 181, 246, 0.25);
+}
+
+@media (max-width: 768px) {
+  .periodic-table-grid {
+    grid-template-columns: repeat(9, 60px);
+  }
+}
+
+.button {
+  display: inline-block;
+  background-color: #3498db;
+  color: #ffffff;
+  padding: 0.8rem 1.5rem;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  border: none;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.button:hover {
+  background-color: #2980b9;
+}
+
