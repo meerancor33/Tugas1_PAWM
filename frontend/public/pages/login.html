@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Masuk / Daftar - Virtual Learning</title>
+  <link rel="stylesheet" href="../styles/login.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Virtual Learning</h1>
+    <p>Masuk atau daftar untuk memulai pembelajaran.</p>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="nama@contoh.com" required>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Kata Sandi</label>
+      <input type="password" id="password" placeholder="******" required>
+    </div>
+
+    <div class="buttons">
+      <button id="loginBtn" class="btn-primary">Masuk</button>
+      <button id="registerBtn" class="btn-secondary">Daftar</button>
+    </div>
+
+    <p id="authMessage"></p>
+  </div>
+
+  <script src="../scripts/config.js"></script>
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/auth.js"></script>
+  <script src="../scripts/navbar-auth.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const navbar = document.querySelector('.navbar');
+      if (navbar) navbar.style.display = 'none'; // Hide navbar on login page
+
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const msg = document.getElementById('authMessage');
+
+      document.getElementById('loginBtn').addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        msg.textContent = '';
+        try {
+          const data = await window.Auth.login(email, password);
+          if (data?.access_token) {
+            msg.textContent = 'Berhasil masuk. Mengarahkan ke Profil...';
+            setTimeout(() => {
+              window.location.href = 'profile.html';
+            }, 700);
+          } else {
+            throw new Error('Login gagal, token tidak ditemukan.');
+          }
+        } catch (e) {
+          msg.textContent = e.message || 'Gagal masuk.';
+        }
+      });
+
+      document.getElementById('registerBtn').addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        msg.textContent = '';
+        try {
+          await window.Auth.register(email, password);
+          msg.textContent = 'Pendaftaran berhasil. Anda dapat masuk sekarang.';
+        } catch (e) {
+          msg.textContent = e.message || 'Gagal mendaftar.';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

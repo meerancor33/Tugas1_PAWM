@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Profil Pengguna - Virtual Learning</title>
+  <link rel="stylesheet" href="../styles/index.css">
+  <link rel="stylesheet" href="../styles/profile.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <h1 class="nav-logo">Virtual Learning</h1>
+      <ul class="nav-menu">
+        <li><a href="welcome.html" class="nav-link">Beranda</a></li>
+        <li><a href="pembelajaran.html" class="nav-link">Pembelajaran</a></li>
+        <li><a href="periodic_table.html" class="nav-link">Tabel Periodik</a></li>
+        <li><a href="flashcard.html" class="nav-link">Flashcard</a></li>
+        <li><a href="quiz.html" class="nav-link">Kuis</a></li>
+        <li><a href="games.html" class="nav-link">Games</a></li>
+        <li id="auth-slot"></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <section class="container" style="max-width:1000px;margin:2rem auto;">
+      <h1>Profil Pengguna</h1>
+      <div id="userInfo" class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;margin-bottom:1rem;">
+        <p><strong>Email:</strong> <span id="userEmail">-</span></p>
+        <p><strong>Tanggal Daftar:</strong> <span id="userCreated">-</span></p>
+      </div>
+
+      <section class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;">
+        <article class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;">
+          <h2>Progres Pembelajaran</h2>
+          <ul id="learningProgress"></ul>
+        </article>
+
+        <article class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;">
+          <h2>Flashcard</h2>
+          <ul id="flashcardProgress"></ul>
+        </article>
+
+        <article class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;">
+          <h2>Kuis</h2>
+          <ul id="quizResults"></ul>
+        </article>
+
+        <article class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;">
+          <h2>Games</h2>
+          <ul id="gameStats"></ul>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <script src="../scripts/config.js"></script>
+  <script src="../scripts/api.js"></script>
+  <script src="../scripts/auth.js"></script>
+  <script src="../scripts/navbar-auth.js"></script>
+  <script src="../scripts/profile.js"></script>
+</body>
+</html>

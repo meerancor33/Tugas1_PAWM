@@ -5,18 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcard Kimia - Virtual Learning</title>
     <link rel="stylesheet" href="../styles/flashcard.css">
+    <link rel="stylesheet" href="../styles/index.css">
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-container">
             <h1 class="nav-logo">Virtual Learning</h1>
-            <ul class="nav-menu">
+            <button class="nav-toggle" onclick="toggleMenu()">&#9776;</button>
+            <ul class="nav-menu" id="navMenu">
                 <li><a href="welcome.html" class="nav-link">Beranda</a></li>
                 <li><a href="pembelajaran.html" class="nav-link">Pembelajaran</a></li>
                 <li><a href="periodic_table.html" class="nav-link">Tabel Periodik</a></li>
                 <li><a href="flashcard.html" class="nav-link active">Flashcard</a></li>
                 <li><a href="quiz.html" class="nav-link">Kuis</a></li>
                 <li><a href="games.html" class="nav-link">Games</a></li>
+                <li id="auth-slot"></li>
             </ul>
         </div>
     </nav>
@@ -44,28 +47,28 @@
                         <h3>Modul 4: Molekul, Mol, dan Persamaan Kimia</h3>
                         <button class="btn btn-primary">Mulai Belajar</button>
                     </div>
-                    <div class="module-card" data-module="stoikiometri">
-                        <h3>Modul 5: Stoikiometri</h3>
+                    <div class="module-card" data-module="termodinamika">
+                        <h3>Modul 5: Termodinamika Kimia</h3>
                         <button class="btn btn-primary">Mulai Belajar</button>
                     </div>
-                    <div class="module-card" data-module="gas">
-                        <h3>Modul 6: Gas</h3>
-                        <button class="btn btn-primary">Mulai Belajar</button>
-                    </div>
-                    <div class="module-card" data-module="molekul-material">
-                        <h3>Modul 7: Molekul dan Material</h3>
-                        <button class="btn btn-primary">Mulai Belajar</button>
-                    </div>
-                    <div class="module-card" data-module="termokimia">
-                        <h3>Modul 8: Termokimia</h3>
+                    <div class="module-card" data-module="reaksi-redoks">
+                        <h3>Modul 6: Reaksi Redoks</h3>
                         <button class="btn btn-primary">Mulai Belajar</button>
                     </div>
                     <div class="module-card" data-module="elektrokimia">
-                        <h3>Modul 9: Elektrokimia</h3>
+                        <h3>Modul 7: Elektrokimia</h3>
                         <button class="btn btn-primary">Mulai Belajar</button>
                     </div>
-                    <div class="module-card" data-module="termodinamika">
-                        <h3>Modul 10: Termodinamika</h3>
+                    <div class="module-card" data-module="kimia-organik">
+                        <h3>Modul 8: Kimia Organik Dasar</h3>
+                        <button class="btn btn-primary">Mulai Belajar</button>
+                    </div>
+                    <div class="module-card" data-module="kinetika">
+                        <h3>Modul 9: Kinetika Kimia</h3>
+                        <button class="btn btn-primary">Mulai Belajar</button>
+                    </div>
+                    <div class="module-card" data-module="asam-basa">
+                        <h3>Modul 10: Teori Asam Basa</h3>
                         <button class="btn btn-primary">Mulai Belajar</button>
                     </div>
                     <div class="module-card" data-module="kesetimbangan">
@@ -109,6 +112,17 @@
         </div>
     </main>
 
+    <script src="../scripts/config.js"></script>
+    <script src="../scripts/api.js"></script>
+    <script src="../scripts/auth.js"></script>
+    <script src="../scripts/navbar-auth.js"></script>
+    <script src="../scripts/progress.js"></script>
     <script src="../scripts/flashcard-script.js"></script>
+    <script>
+        function toggleMenu() {
+            const navMenu = document.getElementById('navMenu');
+            navMenu.classList.toggle('active');
+        }
+    </script>
 </body>
 </html>
