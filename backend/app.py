@@ -29,14 +29,18 @@ app = FastAPI(
 )
 
 # CORS configuration
-origins = os.getenv("VL_CORS_ORIGINS", "*").split(",")
+origins = [
+    "http://localhost:3000",
+    "https://virtual-lab-kimia.vercel.app/",
+    "https://tugas1pawm-production.up.railway.app/",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if "*" in origins else [o.strip() for o in origins],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Origin", "Content-Type", "Authorization"],
 )
 
 
