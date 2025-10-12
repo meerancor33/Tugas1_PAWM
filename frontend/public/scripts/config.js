@@ -10,10 +10,7 @@
         // Development - FastAPI biasanya berjalan di port 8000
         return 'http://localhost:8000';
       } else {
-        // Production - Ganti dengan URL backend Anda
-        // Contoh: 'https://api.virtuallearning.com'
-        // Atau jika menggunakan Railway/Render: 'https://your-app.railway.app'
-        return 'https://your-backend-url.com';
+        return 'https://tugas1pawm-production.up.railway.app';
       }
     })(),
     
