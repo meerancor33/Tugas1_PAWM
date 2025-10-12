@@ -30,10 +30,11 @@ app = FastAPI(title="Virtual Lab Backend", version="1.0.0")
 origins = os.getenv("VL_CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in origins],
+    allow_origins=["*"] if "*" in origins else [o.strip() for o in origins],  # ← Ubah ini
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],  # ← Tambah ini
 )
 
 # Pydantic schemas
