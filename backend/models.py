@@ -1,77 +1,122 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from database import Base
 
+
+# ==========================
+#  USER MODEL
+# ==========================
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
 
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    # Relationships
+    flashcard_progress = relationship("FlashcardProgress", back_populates="user", cascade="all, delete-orphan")
+    quiz_results = relationship("QuizResult", back_populates="user", cascade="all, delete-orphan")
+    game_stats = relationship("GameStat", back_populates="user", cascade="all, delete-orphan")
+    learning_actions = relationship("LearningAction", back_populates="user", cascade="all, delete-orphan")
+
+
+# ==========================
+#  FLASHCARD PROGRESS MODEL
+# ==========================
 class FlashcardProgress(Base):
     __tablename__ = "flashcard_progress"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
-    module = Column(String, nullable=False)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    module = Column(String(255), nullable=False, index=True)
     current = Column(Integer, default=0)
     total = Column(Integer, default=0)
-    at = Column(DateTime, default=datetime.utcnow)
+    at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+
+    user = relationship("User", back_populates="flashcard_progress")
 
     def to_dict(self):
         return {
-            "module": self.module, 
-            "current": self.current, 
-            "total": self.total, 
-            "at": self.at.isoformat()
+            "id": self.id,
+            "module": self.module,
+            "current": self.current,
+            "total": self.total,
+            "at": self.at.isoformat(),
         }
 
+
+# ==========================
+#  QUIZ RESULT MODEL
+# ==========================
 class QuizResult(Base):
     __tablename__ = "quiz_results"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
-    module = Column(String, nullable=False)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    module = Column(String(255), nullable=False, index=True)
     score = Column(Integer, default=0)
     total = Column(Integer, default=0)
-    at = Column(DateTime, default=datetime.utcnow)
+    at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+
+    user = relationship("User", back_populates="quiz_results")
 
     def to_dict(self):
         return {
-            "module": self.module, 
-            "score": self.score, 
-            "total": self.total, 
-            "at": self.at.isoformat()
+            "id": self.id,
+            "module": self.module,
+            "score": self.score,
+            "total": self.total,
+            "percentage": round((self.score / self.total * 100), 2) if self.total > 0 else 0,
+            "at": self.at.isoformat(),
         }
 
+
+# ==========================
+#  GAME STATS MODEL
+# ==========================
 class GameStat(Base):
     __tablename__ = "game_stats"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
-    game = Column(String, nullable=False)
-    metric = Column(String, nullable=False)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    game = Column(String(255), nullable=False, index=True)
+    metric = Column(String(255), nullable=False)
     value = Column(Integer, default=0)
-    at = Column(DateTime, default=datetime.utcnow)
+    at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+
+    user = relationship("User", back_populates="game_stats")
 
     def to_dict(self):
         return {
-            "game": self.game, 
-            "metric": self.metric, 
-            "value": self.value, 
-            "at": self.at.isoformat()
+            "id": self.id,
+            "game": self.game,
+            "metric": self.metric,
+            "value": self.value,
+            "at": self.at.isoformat(),
         }
 
+
+# ==========================
+#  LEARNING ACTION MODEL
+# ==========================
 class LearningAction(Base):
     __tablename__ = "learning_actions"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
-    module = Column(String, nullable=False)
-    action = Column(String, nullable=False)
-    at = Column(DateTime, default=datetime.utcnow)
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    module = Column(String(255), nullable=False, index=True)
+    action = Column(String(255), nullable=False)
+    at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+
+    user = relationship("User", back_populates="learning_actions")
 
     def to_dict(self):
         return {
-            "module": self.module, 
-            "action": self.action, 
-            "at": self.at.isoformat()
+            "id": self.id,
+            "module": self.module,
+            "action": self.action,
+            "at": self.at.isoformat(),
         }
