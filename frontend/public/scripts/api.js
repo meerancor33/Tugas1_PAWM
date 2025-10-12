@@ -1,5 +1,5 @@
 ;(() => {
-  const BASE_URL = window.APP_CONFIG?.API_BASE_URL || "http://localhost:8000";
+  const BASE_URL = "https://exquisite-clarity-production.up.railway.app";
 
   async function fetchJSON(path, opts = {}) {
     const token = localStorage.getItem("auth_token");

@@ -29,7 +29,7 @@ app = FastAPI(
 )
 
 # CORS configuration
-_frontend_env = os.getenv("FRONTEND_URL", "http://localhost:3000")
+_frontend_env = os.getenv("https://virtual-lab-kimia.vercel.app/", "http://localhost:3000")
 origins = [u.strip().rstrip('/') for u in _frontend_env.split(",") if u.strip()]
 
 app.add_middleware(

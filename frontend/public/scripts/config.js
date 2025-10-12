@@ -12,7 +12,7 @@
         return 'http://localhost:8000';
       } else {
         // fallback: construct from location (si FE dan BE deploy di subdomain berbeda => ubah sesuai)
-        return `https://tugas1pawm-production.up.railway.app`;
+        return `exquisite-clarity-production.up.railway.app`;
       }
     })(),
     REQUEST_TIMEOUT: 30000,
