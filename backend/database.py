@@ -54,7 +54,7 @@ engine = create_engine(
     max_overflow=10,                 # Extra connections when needed
     pool_timeout=30,                 # Wait 30s for connection
     connect_args={
-        "connect_timeout": 10,       # Connection timeout
+        "connect_timeout": 100000,       # Connection timeout
         "options": "-c timezone=utc", # Force UTC
     }
 )
