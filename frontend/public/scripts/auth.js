@@ -1,3 +1,4 @@
+// /js/auth.js
 ;(() => {
   if (!window.API) {
     console.error("❌ API module belum dimuat. Pastikan api.js dimuat sebelum auth.js.");
@@ -6,87 +7,73 @@
 
   const Auth = {
     /**
-     * Register new user
+     * Register user baru
+     * Default pakai FormData agar kompatibel dengan OAuth2-style form di server.
+     * Jika backend butuh JSON, ubah opsi 'useJson' jadi true.
      */
-    async register(email, password, fullName = null) {
+    async register(email, password, fullName = null, { useJson = false } = {}) {
       if (!email || !password) {
         throw new Error("Email dan password harus diisi");
       }
-
-      // Validate password
       if (password.length < 6) {
         throw new Error("Kata sandi harus minimal 6 karakter");
       }
 
-      // Create FormData for OAuth2 compatibility
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('password', password);
-      if (fullName) {
-        formData.append('full_name', fullName);
+      if (useJson) {
+        // Kirim JSON
+        const body = { email, password };
+        if (fullName) body.full_name = fullName;
+        const data = await API.post("/auth/register", body, { auth: false });
+        return data;
+      } else {
+        // Kirim FormData
+        const formData = new FormData();
+        formData.append("email", email);
+        formData.append("password", password);
+        if (fullName) formData.append("full_name", fullName);
+
+        const data = await API.postForm("/auth/register", formData, { auth: false });
+        return data;
       }
-
-      const response = await fetch(`${API.BASE_URL}/auth/register`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || `Registration failed: ${response.status}`);
-      }
-
-      return data;
     },
 
     /**
-     * Login user with OAuth2 password flow
+     * Login user (OAuth2 password flow)
+     * Server FastAPI OAuth2PasswordRequestForm mengharapkan 'username' + 'password'
      */
     async login(email, password) {
       if (!email || !password) {
         throw new Error("Email dan password harus diisi");
       }
 
-      // OAuth2PasswordRequestForm expects 'username' and 'password' fields
       const formData = new FormData();
-      formData.append('username', email); // OAuth2 uses 'username' field
-      formData.append('password', password);
+      formData.append("username", email); // sesuai OAuth2
+      formData.append("password", password);
 
-      const response = await fetch(`${API.BASE_URL}/auth/login`, {
-        method: "POST",
-        body: formData,
-      });
+      const data = await API.postForm("/auth/login", formData, { auth: false });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Login gagal");
-      }
-
-      // Store token and user info
-      if (data?.access_token) {
-        localStorage.setItem("auth_token", data.access_token);
-        
-        // Fetch user info after login
-        try {
-          const userInfo = await this.fetchProtected("/users/me");
-          localStorage.setItem("user_email", userInfo.email);
-          localStorage.setItem("user_id", userInfo.id);
-          if (userInfo.full_name) {
-            localStorage.setItem("user_name", userInfo.full_name);
-          }
-          localStorage.setItem("user_created", userInfo.created_at);
-        } catch (error) {
-          console.warn("Could not fetch user info:", error);
-          localStorage.setItem("user_email", email);
-        }
-        
-        window.dispatchEvent(new Event("authStateChanged"));
-        return data;
-      } else {
+      if (!data?.access_token) {
         throw new Error("Token tidak ditemukan dalam response");
       }
+
+      // Simpan token
+      localStorage.setItem("auth_token", data.access_token);
+
+      // Ambil info user setelah login
+      try {
+        const userInfo = await this.fetchProtected("/users/me");
+        if (userInfo?.email) localStorage.setItem("user_email", userInfo.email);
+        if (userInfo?.id) localStorage.setItem("user_id", userInfo.id);
+        if (userInfo?.full_name) localStorage.setItem("user_name", userInfo.full_name);
+        if (userInfo?.created_at) localStorage.setItem("user_created", userInfo.created_at);
+      } catch (error) {
+        console.warn("Tidak dapat mengambil user info:", error);
+        // fallback minimal
+        localStorage.setItem("user_email", email);
+      }
+
+      window.dispatchEvent(new Event("authStateChanged"));
+      return data;
     },
 
     /**
@@ -98,43 +85,48 @@
       localStorage.removeItem("user_id");
       localStorage.removeItem("user_name");
       localStorage.removeItem("user_created");
+
       window.dispatchEvent(new Event("authStateChanged"));
-      
-      // Redirect to login page
-      const loginPath = window.location.pathname.includes('/pages/') 
-        ? 'login.html' 
-        : '../pages/login.html';
+
+      // Redirect ke login page
+      const loginPath = window.location.pathname.includes("/pages/")
+        ? "login.html"
+        : "../pages/login.html";
       window.location.href = loginPath;
     },
 
     /**
-     * Check if user is logged in
+     * Cek status logged in berdasarkan token + expiry JWT (jika bisa diparse)
      */
     isLoggedIn() {
       const token = localStorage.getItem("auth_token");
       if (!token) return false;
 
-      // Optional: Check token expiration
       try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const exp = payload.exp * 1000; // Convert to milliseconds
-        if (Date.now() >= exp) {
-          this.logout();
-          return false;
+        const parts = token.split(".");
+        if (parts.length !== 3) return true; // bukan JWT standar, anggap saja valid
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload?.exp) {
+          const expMs = payload.exp * 1000;
+          if (Date.now() >= expMs) {
+            this.logout();
+            return false;
+          }
         }
         return true;
-      } catch (error) {
-        console.warn("Invalid token format:", error);
-        return true; // Assume valid if can't parse
+      } catch (e) {
+        console.warn("Gagal parse JWT:", e);
+        // Jika gagal parse, anggap token masih valid tapi waspada
+        return true;
       }
     },
 
     /**
-     * Get user information
+     * Ambil informasi user dari localStorage (cache)
      */
     getUser() {
       if (!this.isLoggedIn()) return null;
-      
+
       return {
         id: localStorage.getItem("user_id"),
         email: localStorage.getItem("user_email"),
@@ -144,71 +136,53 @@
     },
 
     /**
-     * Get auth token
+     * Ambil token auth
      */
     getToken() {
       return localStorage.getItem("auth_token");
     },
 
     /**
-     * Fetch protected endpoint
+     * Panggil endpoint protected via API.fetchJSON
+     * - Otomatis menyertakan Authorization: Bearer <token>
+     * - Jika 401: logout & lempar error ramah
      */
-    async fetchProtected(url, options = {}) {
+    async fetchProtected(pathOrUrl, options = {}) {
       if (!this.isLoggedIn()) {
         throw new Error("Anda harus login terlebih dahulu");
       }
 
-      const token = this.getToken();
-      const headers = {
-        "Authorization": `Bearer ${token}`,
-        ...options.headers,
-      };
-
-      // Handle JSON body
-      if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
-        headers["Content-Type"] = "application/json";
-        options.body = JSON.stringify(options.body);
+      try {
+        const data = await API.fetchJSON(pathOrUrl, { ...options, auth: true });
+        return data;
+      } catch (err) {
+        const msg = (err && err.message) || "";
+        if (
+          /401/.test(msg) ||
+          /unauthorized/i.test(msg) ||
+          /expired/i.test(msg) ||
+          /token/i.test(msg)
+        ) {
+          // Token invalid/expired
+          this.logout();
+          throw new Error("Sesi Anda telah berakhir. Silakan login kembali.");
+        }
+        throw err;
       }
-
-      const fullUrl = url.startsWith('http') ? url : `${API.BASE_URL}${url}`;
-      const response = await fetch(fullUrl, {
-        ...options,
-        headers,
-      });
-
-      // Handle 401 Unauthorized
-      if (response.status === 401) {
-        this.logout();
-        throw new Error("Sesi Anda telah berakhir. Silakan login kembali.");
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || `Request failed: ${response.status}`);
-      }
-
-      return data;
     },
 
     /**
-     * Get user profile with progress data
+     * GET /profile
      */
     async getProfile() {
-      try {
-        return await this.fetchProtected("/profile");
-      } catch (error) {
-        if (error.message.includes("401") || error.message.includes("Token")) {
-          this.logout();
-        }
-        throw error;
-      }
+      return await this.fetchProtected("/profile");
     },
 
     /**
-     * Save flashcard progress
+     * POST /progress/flashcard  → { module, current, total }
      */
     async saveFlashcardProgress(module, current, total) {
+      if (!module && module !== 0) throw new Error("Parameter 'module' wajib diisi");
       return await this.fetchProtected("/progress/flashcard", {
         method: "POST",
         body: { module, current, total },
@@ -216,9 +190,10 @@
     },
 
     /**
-     * Save quiz result
+     * POST /progress/quiz  → { module, score, total }
      */
     async saveQuizResult(module, score, total) {
+      if (!module && module !== 0) throw new Error("Parameter 'module' wajib diisi");
       return await this.fetchProtected("/progress/quiz", {
         method: "POST",
         body: { module, score, total },
@@ -226,9 +201,10 @@
     },
 
     /**
-     * Save game statistics
+     * POST /progress/game → { game, metric, value }
      */
     async saveGameStat(game, metric, value) {
+      if (!game) throw new Error("Parameter 'game' wajib diisi");
       return await this.fetchProtected("/progress/game", {
         method: "POST",
         body: { game, metric, value },
@@ -236,9 +212,11 @@
     },
 
     /**
-     * Track learning action
+     * POST /progress/learning → { module, action }
      */
     async trackLearning(module, action) {
+      if (!module) throw new Error("Parameter 'module' wajib diisi");
+      if (!action) throw new Error("Parameter 'action' wajib diisi");
       return await this.fetchProtected("/progress/learning", {
         method: "POST",
         body: { module, action },
