@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
 from fastapi import FastAPI, HTTPException, Depends, status, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -8,30 +9,24 @@ from pydantic import BaseModel, EmailStr, field_validator
 from jose import jwt, JWTError
 import bcrypt
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, text
 
 from database import SessionLocal, Base, engine, init_db
 from models import User, FlashcardProgress, QuizResult, GameStat, LearningAction
 
-# Configuration
-SECRET_KEY = os.getenv("VL_SECRET_KEY", "dev-secret-change-me-in-production-2024")
+# ====== Config ======
+SECRET_KEY = os.getenv("VL_SECRET_KEY") or os.getenv("SECRET_KEY", "dev-secret-change-me-in-production-2024")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("VL_TOKEN_TTL_MIN", "43200"))  # 30 days
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("VL_TOKEN_TTL_MIN", os.getenv("TOKEN_TTL_MIN", "43200")))  # 30 days
 
 # OAuth2 scheme for token authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-# Initialize FastAPI
-app = FastAPI(
-    title="Virtual Lab Backend", 
-    version="1.0.0",
-    description="Auto-initialized PostgreSQL backend with CRUD operations"
-)
+app = FastAPI(title="Virtual Lab Backend", version="1.1.0")
 
-# CORS configuration
-_frontend_env = os.getenv("FRONTEND_URL", "https://virtual-lab-kimia.vercel.app,http://localhost:3000")
+# ====== CORS ======
+_frontend_env = os.getenv("VL_CORS_ORIGINS") or os.getenv("FRONTEND_URL", "https://virtual-lab-kimia.vercel.app,http://localhost:3000")
 origins = [u.strip().rstrip('/') for u in _frontend_env.split(",") if u.strip()]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -40,71 +35,43 @@ app.add_middleware(
     allow_headers=["Origin", "Content-Type", "Authorization"],
 )
 
-
-# ==================== STARTUP EVENT ====================
+# ====== Startup ======
 @app.on_event("startup")
 async def startup_event():
-    """Auto-initialize database on startup"""
-    print("🚀 Starting Virtual Lab Backend...")
-    print(f"📅 Server time: {datetime.now(timezone.utc).isoformat()}")
-    
-    # Auto-create all tables
     Base.metadata.create_all(bind=engine)
-    if init_db():
-        print("✅ PostgreSQL database ready for CRUD operations")
-    else:
-        print("⚠️ Database initialization failed - check PostgreSQL connection")
+    if not init_db():
+        print("⚠️ Database init failed — check DATABASE_URL")
 
-
-# ==================== PASSWORD UTILITIES ====================
+# ====== Password utils ======
 def hash_password(password: str) -> str:
-    """Hash password using bcrypt"""
     if not password.strip():
         raise ValueError("Password cannot be empty")
     if len(password) > 72:
-        raise ValueError("Password is too long (max 72 characters)")
-    
-    password_bytes = password.encode("utf-8")
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode("utf-8")
+        raise ValueError("Password is too long (max 72 chars)")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify password against hashed password"""
+def verify_password(plain: str, hashed: str) -> bool:
     try:
-        return bcrypt.checkpw(
-            plain_password.encode("utf-8"), 
-            hashed_password.encode("utf-8")
-        )
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
     except Exception:
         return False
 
-
-# ==================== TOKEN UTILITIES ====================
+# ====== Token utils ======
 def create_token(user_id: int, email: str) -> str:
-    """Create JWT access token"""
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload = {
-        "sub": email,
-        "user_id": user_id,
-        "exp": expire
-    }
+    exp = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {"sub": str(user_id), "email": email, "user_id": user_id, "exp": exp}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def decode_token(token: str) -> Optional[dict]:
-    """Decode and validate JWT token"""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None
 
-
-# ==================== DEPENDENCIES ====================
+# ====== DB dep ======
 def get_db():
-    """Database session dependency"""
     db = SessionLocal()
     try:
         yield db
@@ -112,37 +79,22 @@ def get_db():
         db.close()
 
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> User:
-    """Get current authenticated user"""
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     payload = decode_token(token)
     if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    user_id = payload.get("user_id")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload"
-        )
-    
-    user = db.query(User).filter(User.id == user_id).first()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token", headers={"WWW-Authenticate": "Bearer"})
+    # tolerate either payload["user_id"] or payload["sub"] (string id)
+    uid = payload.get("user_id") or payload.get("sub")
+    try:
+        uid = int(uid)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+    user = db.query(User).filter(User.id == uid).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
-    
+        raise HTTPException(status_code=401, detail="User not found")
     return user
 
-
-# ==================== PYDANTIC SCHEMAS ====================
+# ====== Schemas ======
 class RegisterReq(BaseModel):
     email: EmailStr
     password: str
@@ -208,286 +160,128 @@ class LearningReq(BaseModel):
     module: str
     action: str
 
-
-# ==================== ROOT ROUTES ====================
+# ====== Root/health ======
 @app.get("/")
 def root():
     return {
-        "message": "Virtual Learning API", 
-        "version": "1.0.0", 
+        "message": "Virtual Learning API",
+        "version": "1.1.0",
         "status": "running",
-        "database": "PostgreSQL",
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "database": os.getenv("DATABASE_URL") or os.getenv("VL_DATABASE_URL") or "sqlite",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
-    """Health check with database connectivity test"""
     try:
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         db_status = "connected"
     except Exception as e:
-        db_status = f"error: {str(e)}"
-    
-    return {
-        "status": "healthy", 
-        "database": db_status,
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+        db_status = f"error: {e}"
+    return {"status": "healthy", "database": db_status, "timestamp": datetime.now(timezone.utc).isoformat()}
 
-
-# ==================== AUTH ROUTES ====================
+# ====== Auth ======
 @app.post("/auth/register")
-def register(
+def register_form(
     email: str = Form(...),
     password: str = Form(...),
-    full_name: str = Form(None),
-    db: Session = Depends(get_db)
+    full_name: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
 ):
-    """Register new user"""
-    # Validate password
-    if not password.strip():
-        raise HTTPException(
-            status_code=400, 
-            detail="Password cannot be empty"
-        )
-    if len(password) < 6:
-        raise HTTPException(
-            status_code=400,
-            detail="Password must be at least 6 characters"
-        )
-    if len(password) > 72:
-        raise HTTPException(
-            status_code=400, 
-            detail="Password is too long (max 72 characters)"
-        )
-    
-    # Check if email already exists
-    existing_user = db.query(User).filter(User.email == email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=400, 
-            detail="Email already registered"
-        )
-    
-    # Hash password and create user
-    try:
-        hashed_password = hash_password(password)
-        user = User(
-            email=email,
-            password_hash=hashed_password,
-            full_name=full_name
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        
-        return {
-            "message": "User registered successfully",
-            "email": user.email
-        }
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail=f"Registration failed: {str(e)}"
-        )
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user = User(email=email, password_hash=hash_password(password), full_name=full_name)
+    db.add(user)
+    db.commit()
+    return {"message": "User registered successfully", "email": user.email}
 
 
+# Back-compat: JSON body login (old frontend)
+@app.post("/auth/login/json", response_model=TokenResp)
+def login_json(body: dict, db: Session = Depends(get_db)):
+    email = (body or {}).get("email")
+    password = (body or {}).get("password")
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="email & password required")
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not verify_password(password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    return TokenResp(access_token=create_token(user.id, user.email))
+
+
+# OAuth2 Password Flow (current)
 @app.post("/auth/login", response_model=TokenResp)
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    """Login user with OAuth2 password flow"""
-    # Find user by email (username field in OAuth2)
-    user = db.query(User).filter(User.email == form_data.username).first()
-    
-    # Verify credentials
-    if not user or not verify_password(form_data.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Create access token
-    access_token = create_token(user.id, user.email)
-    
-    return TokenResp(access_token=access_token)
+def login_oauth(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form.username).first()
+    if not user or not verify_password(form.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password", headers={"WWW-Authenticate": "Bearer"})
+    return TokenResp(access_token=create_token(user.id, user.email))
 
 
 @app.get("/users/me", response_model=UserResponse)
-def get_current_user_info(
-    current_user: User = Depends(get_current_user)
-):
-    """Get current authenticated user information"""
+def users_me(current_user: User = Depends(get_current_user)):
     return UserResponse(
         id=current_user.id,
         email=current_user.email,
         full_name=current_user.full_name,
-        created_at=current_user.created_at.isoformat()
+        created_at=current_user.created_at.isoformat(),
     )
 
-
-# ==================== PROFILE ROUTE ====================
+# ====== Profile & Progress ======
 @app.get("/profile")
-def profile(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get user profile with all progress data"""
-    flashcards = db.query(FlashcardProgress).filter(
-        FlashcardProgress.user_id == current_user.id
-    ).order_by(FlashcardProgress.at.desc()).all()
-    
-    quizzes = db.query(QuizResult).filter(
-        QuizResult.user_id == current_user.id
-    ).order_by(QuizResult.at.desc()).limit(100).all()
-    
-    games = db.query(GameStat).filter(
-        GameStat.user_id == current_user.id
-    ).order_by(GameStat.at.desc()).limit(100).all()
-    
-    learning = db.query(LearningAction).filter(
-        LearningAction.user_id == current_user.id
-    ).order_by(LearningAction.at.desc()).limit(100).all()
-    
+def profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    fcs = db.query(FlashcardProgress).filter(FlashcardProgress.user_id == current_user.id).order_by(FlashcardProgress.at.desc()).all()
+    quizzes = db.query(QuizResult).filter(QuizResult.user_id == current_user.id).order_by(QuizResult.at.desc()).limit(100).all()
+    games = db.query(GameStat).filter(GameStat.user_id == current_user.id).order_by(GameStat.at.desc()).limit(100).all()
+    learn = db.query(LearningAction).filter(LearningAction.user_id == current_user.id).order_by(LearningAction.at.desc()).limit(100).all()
     return {
-        "user": {
-            "id": current_user.id,
-            "email": current_user.email,
-            "full_name": current_user.full_name,
-            "created_at": current_user.created_at.isoformat()
-        },
-        "flashcards": [fc.to_dict() for fc in flashcards],
+        "user": {"id": current_user.id, "email": current_user.email, "full_name": current_user.full_name, "created_at": current_user.created_at.isoformat()},
+        "flashcards": [fc.to_dict() for fc in fcs],
         "quizzes": [q.to_dict() for q in quizzes],
         "games": [g.to_dict() for g in games],
-        "learning": [l.to_dict() for l in learning],
+        "learning": [l.to_dict() for l in learn],
     }
 
 
-# ==================== PROGRESS ROUTES ====================
 @app.post("/progress/flashcard")
-def flashcard_progress(
-    req: FlashcardReq,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Save flashcard progress"""
+def flashcard_progress(req: FlashcardReq, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if req.total <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Total must be greater than 0"
-        )
-    
+        raise HTTPException(status_code=400, detail="Total must be greater than 0")
     if req.current > req.total:
-        raise HTTPException(
-            status_code=400,
-            detail="Current cannot exceed total"
-        )
-    
-    # Check existing progress
-    existing = db.query(FlashcardProgress).filter(
-        FlashcardProgress.user_id == current_user.id,
-        FlashcardProgress.module == req.module
-    ).order_by(desc(FlashcardProgress.at)).first()
-    
-    # Only create new record if progress changed
+        raise HTTPException(status_code=400, detail="Current cannot exceed total")
+    existing = db.query(FlashcardProgress).filter(FlashcardProgress.user_id == current_user.id, FlashcardProgress.module == req.module).order_by(desc(FlashcardProgress.at)).first()
     if not existing or existing.current != req.current or existing.total != req.total:
-        record = FlashcardProgress(
-            user_id=current_user.id,
-            module=req.module,
-            current=req.current,
-            total=req.total
-        )
-        db.add(record)
+        rec = FlashcardProgress(user_id=current_user.id, module=req.module, current=req.current, total=req.total)
+        db.add(rec)
         db.commit()
-        db.refresh(record)
-        
-        return {
-            "ok": True,
-            "id": record.id,
-            "at": record.at.isoformat(),
-            "progress": f"{req.current}/{req.total}"
-        }
-    
-    return {
-        "ok": True,
-        "id": existing.id,
-        "at": existing.at.isoformat(),
-        "progress": f"{existing.current}/{existing.total}",
-        "cached": True
-    }
+        db.refresh(rec)
+        return {"ok": True, "id": rec.id, "at": rec.at.isoformat(), "progress": f"{req.current}/{req.total}"}
+    return {"ok": True, "id": existing.id, "at": existing.at.isoformat(), "progress": f"{existing.current}/{existing.total}", "cached": True}
 
 
 @app.post("/progress/quiz")
-def quiz_result(
-    req: QuizReq,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Save quiz result"""
-    record = QuizResult(
-        user_id=current_user.id,
-        module=req.module,
-        score=req.score,
-        total=req.total
-    )
-    db.add(record)
+def quiz_result(req: QuizReq, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    rec = QuizResult(user_id=current_user.id, module=req.module, score=req.score, total=req.total)
+    db.add(rec)
     db.commit()
-    db.refresh(record)
-    
-    return {
-        "ok": True,
-        "id": record.id,
-        "at": record.at.isoformat()
-    }
+    db.refresh(rec)
+    return {"ok": True, "id": rec.id, "at": rec.at.isoformat()}
 
 
 @app.post("/progress/game")
-def game_stat(
-    req: GameReq,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Save game statistics"""
-    record = GameStat(
-        user_id=current_user.id,
-        game=req.game,
-        metric=req.metric,
-        value=req.value
-    )
-    db.add(record)
+def game_stat(req: GameReq, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    rec = GameStat(user_id=current_user.id, game=req.game, metric=req.metric, value=req.value)
+    db.add(rec)
     db.commit()
-    db.refresh(record)
-    
-    return {
-        "ok": True,
-        "id": record.id,
-        "at": record.at.isoformat()
-    }
+    db.refresh(rec)
+    return {"ok": True, "id": rec.id, "at": rec.at.isoformat()}
 
 
 @app.post("/progress/learning")
-def learning_action(
-    req: LearningReq,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Track learning action"""
-    record = LearningAction(
-        user_id=current_user.id,
-        module=req.module,
-        action=req.action
-    )
-    db.add(record)
+def learning_action(req: LearningReq, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    rec = LearningAction(user_id=current_user.id, module=req.module, action=req.action)
+    db.add(rec)
     db.commit()
-    db.refresh(record)
-    
-    return {
-        "ok": True,
-        "id": record.id,
-        "at": record.at.isoformat()
-    }
+    db.refresh(rec)
+    return {"ok": True, "id": rec.id, "at": rec.at.isoformat()}
