@@ -8,9 +8,9 @@
       
       if (hostname === 'localhost' || hostname === '127.0.0.1') {
         // Development - FastAPI biasanya berjalan di port 8000
-        return 'https://tugas1pawm-production.up.railway.app';
-      } else {
         return 'http://localhost:8000';
+      } else {
+        return 'https://tugas1pawm-production.up.railway.app';
       }
     })(),
     

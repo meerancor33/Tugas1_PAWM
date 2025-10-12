@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from database import SessionLocal, Base, engine
+from database import SessionLocal, Base, engine, init_database
 from models import User, FlashcardProgress, QuizResult, GameStat, LearningAction
 
 # Configuration
@@ -21,23 +21,40 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("VL_TOKEN_TTL_MIN", "43200"))  # 30 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
-# DB init
-Base.metadata.create_all(bind=engine)
-
-app = FastAPI(title="Virtual Lab Backend", version="1.0.0")
+# Initialize FastAPI
+app = FastAPI(
+    title="Virtual Lab Backend", 
+    version="1.0.0",
+    description="Auto-initialized PostgreSQL backend with CRUD operations"
+)
 
 # CORS configuration
 origins = os.getenv("VL_CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if "*" in origins else [o.strip() for o in origins],  # ← Ubah ini
+    allow_origins=["*"] if "*" in origins else [o.strip() for o in origins],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],  # ← Tambah ini
+    expose_headers=["*"],
 )
 
-# Pydantic schemas
+
+# ==================== STARTUP EVENT ====================
+@app.on_event("startup")
+async def startup_event():
+    """Auto-initialize database on startup"""
+    print("🚀 Starting Virtual Lab Backend...")
+    print(f"📅 Server time: {datetime.utcnow().isoformat()}")
+    
+    # Auto-create all tables
+    if init_database():
+        print("✅ PostgreSQL database ready for CRUD operations")
+    else:
+        print("⚠️  Database initialization failed - check PostgreSQL connection")
+
+
+# ==================== PYDANTIC SCHEMAS ====================
 class RegisterReq(BaseModel):
     email: EmailStr
     password: str
@@ -49,14 +66,17 @@ class RegisterReq(BaseModel):
             raise ValueError('Password must be at least 6 characters')
         return v
 
+
 class LoginReq(BaseModel):
     email: EmailStr
     password: str
+
 
 class TokenResp(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: dict
+
 
 class FlashcardReq(BaseModel):
     module: str
@@ -70,6 +90,7 @@ class FlashcardReq(BaseModel):
             raise ValueError('Value must be non-negative')
         return v
 
+
 class QuizReq(BaseModel):
     module: str
     score: int
@@ -82,16 +103,19 @@ class QuizReq(BaseModel):
             raise ValueError('Value must be non-negative')
         return v
 
+
 class GameReq(BaseModel):
     game: str
     metric: str
     value: int
 
+
 class LearningReq(BaseModel):
     module: str
     action: str
 
-# Utilities
+
+# ==================== UTILITIES ====================
 def get_db():
     db = SessionLocal()
     try:
@@ -99,10 +123,12 @@ def get_db():
     finally:
         db.close()
 
+
 def create_token(user_id: int, email: str):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": str(user_id), "email": email, "exp": expire}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGO)
+
 
 def get_current_user(
     creds: HTTPAuthorizationCredentials = Depends(security),
@@ -120,23 +146,40 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
-# Routes
+
+# ==================== ROUTES ====================
 @app.get("/")
 def root():
     return {
         "message": "Virtual Learning API", 
         "version": "1.0.0", 
         "status": "running",
+        "database": "PostgreSQL",
         "timestamp": datetime.utcnow().isoformat()
     }
 
-@app.get("/health")
-def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
 
+@app.get("/health")
+def health_check(db: Session = Depends(get_db)):
+    """Health check with database connectivity test"""
+    try:
+        # Test database connection
+        db.execute("SELECT 1")
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    return {
+        "status": "healthy", 
+        "database": db_status,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+# ==================== AUTH ROUTES ====================
 @app.post("/auth/register")
 def register(req: RegisterReq, db: Session = Depends(get_db)):
+    """Register new user (CREATE)"""
     existed = db.query(User).filter(User.email == req.email).first()
     if existed:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -150,13 +193,16 @@ def register(req: RegisterReq, db: Session = Depends(get_db)):
     return {
         "message": "User registered successfully", 
         "user": {
+            "id": user.id,
             "email": user.email, 
             "created_at": user.created_at.isoformat()
         }
     }
 
+
 @app.post("/auth/login", response_model=TokenResp)
 def login(req: LoginReq, db: Session = Depends(get_db)):
+    """Login user (READ)"""
     user = db.query(User).filter(User.email == req.email).first()
     if not user or not pwd_context.verify(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -164,12 +210,18 @@ def login(req: LoginReq, db: Session = Depends(get_db)):
     token = create_token(user.id, user.email)
     return TokenResp(
         access_token=token,
-        user={"email": user.email, "created_at": user.created_at.isoformat()}
+        user={
+            "id": user.id,
+            "email": user.email, 
+            "created_at": user.created_at.isoformat()
+        }
     )
 
+
+# ==================== PROFILE ROUTE (READ) ====================
 @app.get("/profile")
 def profile(current: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Get all flashcard progress for this user
+    """Get user profile with all progress data (READ)"""
     fcs = db.query(FlashcardProgress).filter(
         FlashcardProgress.user_id == current.id
     ).order_by(FlashcardProgress.at.desc()).all()
@@ -188,6 +240,7 @@ def profile(current: User = Depends(get_current_user), db: Session = Depends(get
     
     return {
         "user": {
+            "id": current.id,
             "email": current.email, 
             "created_at": current.created_at.isoformat()
         },
@@ -197,30 +250,28 @@ def profile(current: User = Depends(get_current_user), db: Session = Depends(get
         "learning": [l.to_dict() for l in learn],
     }
 
+
+# ==================== PROGRESS ROUTES (CREATE/UPDATE) ====================
 @app.post("/progress/flashcard")
 def flashcard_progress(
     req: FlashcardReq, 
     current: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
-    """
-    Save flashcard progress for a specific module.
-    Updates existing record for the module or creates a new one.
-    """
-    # Validate input
+    """Save flashcard progress (CREATE/UPDATE)"""
     if req.total <= 0:
         raise HTTPException(status_code=400, detail="Total must be greater than 0")
     
     if req.current > req.total:
         raise HTTPException(status_code=400, detail="Current cannot exceed total")
     
-    # Check if there's an existing progress for this user and module
+    # Check existing progress
     existing = db.query(FlashcardProgress).filter(
         FlashcardProgress.user_id == current.id,
         FlashcardProgress.module == req.module
     ).order_by(desc(FlashcardProgress.at)).first()
     
-    # Only create new record if progress has changed
+    # Only create new record if progress changed
     if not existing or existing.current != req.current or existing.total != req.total:
         rec = FlashcardProgress(
             user_id=current.id, 
@@ -238,7 +289,6 @@ def flashcard_progress(
             "progress": f"{req.current}/{req.total}"
         }
     
-    # Return existing record if no change
     return {
         "ok": True, 
         "id": existing.id, 
@@ -247,12 +297,14 @@ def flashcard_progress(
         "cached": True
     }
 
+
 @app.post("/progress/quiz")
 def quiz_result(
     req: QuizReq, 
     current: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
+    """Save quiz result (CREATE)"""
     rec = QuizResult(
         user_id=current.id, 
         module=req.module, 
@@ -264,12 +316,14 @@ def quiz_result(
     db.refresh(rec)
     return {"ok": True, "id": rec.id, "at": rec.at.isoformat()}
 
+
 @app.post("/progress/game")
 def game_stat(
     req: GameReq, 
     current: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
+    """Save game statistics (CREATE)"""
     rec = GameStat(
         user_id=current.id, 
         game=req.game, 
@@ -281,12 +335,14 @@ def game_stat(
     db.refresh(rec)
     return {"ok": True, "id": rec.id, "at": rec.at.isoformat()}
 
+
 @app.post("/progress/learning")
 def learning_action(
     req: LearningReq, 
     current: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
+    """Track learning action (CREATE)"""
     rec = LearningAction(
         user_id=current.id, 
         module=req.module, 
@@ -297,6 +353,8 @@ def learning_action(
     db.refresh(rec)
     return {"ok": True, "id": rec.id, "at": rec.at.isoformat()}
 
+
+# ==================== RUN SERVER ====================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
