@@ -1,22 +1,26 @@
 ;(() => {
   const CONFIG = {
     API_BASE_URL: (() => {
-      // Jika ada env var (dibuat saat build), gunakan itu.
-      // Untuk static sites, banyak host menyediakan REPLACEMENT via process.env.* saat build (React/Vite).
+      // Jika ada override manual, misal window.APP_CONFIG._OVERRIDE_API dari build tools
       if (window.APP_CONFIG && window.APP_CONFIG._OVERRIDE_API) {
         return window.APP_CONFIG._OVERRIDE_API;
       }
 
       const hostname = window.location.hostname;
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:8000';
-      } else {
-        // fallback: construct from location (si FE dan BE deploy di subdomain berbeda => ubah sesuai)
-        return `exquisite-clarity-production.up.railway.app`;
+
+      // --- Mode lokal ---
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "http://localhost:8000";
       }
+
+      // --- Mode production ---
+      // Railway backend (HARUS pakai https agar fetch() tidak gagal mixed content)
+      return "https://exquisite-clarity-production.up.railway.app";
     })(),
-    REQUEST_TIMEOUT: 30000,
-    APP_NAME: 'virtual_learning',
+
+    REQUEST_TIMEOUT: 30000, // 30 detik timeout default
+    APP_NAME: "virtual_learning",
   };
+
   window.APP_CONFIG = CONFIG;
 })();
