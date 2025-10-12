@@ -355,7 +355,7 @@ def learning_action(
     return {"ok": True, "id": rec.id, "at": rec.at.isoformat()}
 
 
-# ==================== RUN SERVER ====================
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+# # ==================== RUN SERVER ====================
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
