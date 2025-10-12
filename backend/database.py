@@ -35,7 +35,6 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 DB_URL = os.getenv(
     "DATABASE_URL",
     # 👇 PASTE YOUR CLOUD DATABASE URL HERE (or set env var)
-    # Example: "postgresql://user:pass@host.railway.app:5432/railway"
     "postgresql://postgres:WWkvzlmBiObtMIAFSBBvOlwWquRwHxNM@postgres.railway.internal:5432/railway"  # Replace with your cloud DB
 )
 
@@ -57,7 +56,6 @@ engine = create_engine(
     connect_args={
         "connect_timeout": 10,       # Connection timeout
         "options": "-c timezone=utc", # Force UTC
-        "sslmode": "require"         # Force SSL for cloud (comment out for Railway)
     }
 )
 
