@@ -1,26 +1,22 @@
-// config.js - Konfigurasi untuk koneksi ke backend
 ;(() => {
   const CONFIG = {
-    // Backend API URL
     API_BASE_URL: (() => {
-      // Auto-detect environment
+      // Jika ada env var (dibuat saat build), gunakan itu.
+      // Untuk static sites, banyak host menyediakan REPLACEMENT via process.env.* saat build (React/Vite).
+      if (window.APP_CONFIG && window.APP_CONFIG._OVERRIDE_API) {
+        return window.APP_CONFIG._OVERRIDE_API;
+      }
+
       const hostname = window.location.hostname;
-      
       if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        // Development - FastAPI biasanya berjalan di port 8000
         return 'http://localhost:8000';
       } else {
-        return 'https://tugas1pawm-production.up.railway.app';
+        // fallback: construct from location (si FE dan BE deploy di subdomain berbeda => ubah sesuai)
+        return `https://tugas1pawm-production.up.railway.app`;
       }
     })(),
-    
-    // Timeout untuk request (ms)
     REQUEST_TIMEOUT: 30000,
-    
-    // Nama aplikasi untuk localStorage prefix
     APP_NAME: 'virtual_learning',
   };
-
-  // Expose CONFIG ke window
   window.APP_CONFIG = CONFIG;
 })();
