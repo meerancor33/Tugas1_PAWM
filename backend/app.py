@@ -10,7 +10,7 @@ import bcrypt
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from database import SessionLocal, Base, engine, init_database
+from database import SessionLocal, Base, engine, init_db
 from models import User, FlashcardProgress, QuizResult, GameStat, LearningAction
 
 # Configuration
@@ -50,7 +50,7 @@ async def startup_event():
     
     # Auto-create all tables
     Base.metadata.create_all(bind=engine)
-    if init_database():
+    if init_db():
         print("✅ PostgreSQL database ready for CRUD operations")
     else:
         print("⚠️ Database initialization failed - check PostgreSQL connection")
