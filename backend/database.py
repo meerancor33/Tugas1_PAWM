@@ -33,7 +33,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-def init_database():
+def init_db():
     """
     Auto-create all tables on cloud database.
     Safe to run multiple times - won't delete existing data.
