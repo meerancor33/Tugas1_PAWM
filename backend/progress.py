@@ -26,15 +26,15 @@ class FlashcardReq(BaseModel):
     @field_validator('module')
     @classmethod
     def validate_module(cls, v):
-        if not v or not v.strip():
-            raise ValueError('Module name cannot be empty')
-        return v.strip()
+        if not v.strip():
+            raise ValueError("Module name cannot be empty")
+        return v
 
     @field_validator('current', 'total')
     @classmethod
     def validate_positive(cls, v):
         if v < 0:
-            raise ValueError('Value must be non-negative')
+            raise ValueError("Values must be positive")
         return v
 
 
@@ -46,15 +46,15 @@ class QuizReq(BaseModel):
     @field_validator('module')
     @classmethod
     def validate_module(cls, v):
-        if not v or not v.strip():
-            raise ValueError('Module name cannot be empty')
-        return v.strip()
+        if not v.strip():
+            raise ValueError("Module name cannot be empty")
+        return v
 
     @field_validator('score', 'total')
     @classmethod
     def validate_positive(cls, v):
         if v < 0:
-            raise ValueError('Value must be non-negative')
+            raise ValueError("Values must be positive")
         return v
 
 
@@ -66,15 +66,15 @@ class GameReq(BaseModel):
     @field_validator('game', 'metric')
     @classmethod
     def validate_not_empty(cls, v):
-        if not v or not v.strip():
-            raise ValueError('Field cannot be empty')
-        return v.strip()
+        if not v.strip():
+            raise ValueError("Field cannot be empty")
+        return v
 
     @field_validator('value')
     @classmethod
     def validate_value(cls, v):
         if v < 0:
-            raise ValueError('Value must be non-negative')
+            raise ValueError("Value must be positive")
         return v
 
 
@@ -85,9 +85,9 @@ class LearningReq(BaseModel):
     @field_validator('module', 'action')
     @classmethod
     def validate_not_empty(cls, v):
-        if not v or not v.strip():
-            raise ValueError('Field cannot be empty')
-        return v.strip()
+        if not v.strip():
+            raise ValueError("Field cannot be empty")
+        return v
 
 
 class ProgressSummary(BaseModel):
@@ -112,31 +112,32 @@ def save_flashcard_progress(
         raise HTTPException(status_code=400, detail="Total must be greater than 0")
     if req.current > req.total:
         raise HTTPException(status_code=400, detail="Current cannot exceed total")
-    
+
     # Check if there's a recent identical entry (avoid duplicates within 1 minute)
     existing = db.query(FlashcardProgress).filter(
         FlashcardProgress.user_id == current_user.id,
         FlashcardProgress.module == req.module
     ).order_by(desc(FlashcardProgress.at)).first()
-    
+
     if not existing or existing.current != req.current or existing.total != req.total:
-        rec = FlashcardProgress(
+        new_progress = FlashcardProgress(
             user_id=current_user.id,
             module=req.module,
             current=req.current,
             total=req.total
         )
-        db.add(rec)
+        db.add(new_progress)
         db.commit()
-        db.refresh(rec)
+        db.refresh(new_progress)
         return {
             "ok": True,
-            "id": rec.id,
-            "at": rec.at.isoformat(),
-            "progress": f"{req.current}/{req.total}",
-            "percentage": round((req.current / req.total * 100), 2) if req.total > 0 else 0
+            "id": new_progress.id,
+            "at": new_progress.at.isoformat(),
+            "progress": f"{new_progress.current}/{new_progress.total}",
+            "percentage": round((new_progress.current / new_progress.total * 100), 2) if new_progress.total > 0 else 0,
+            "cached": False
         }
-    
+
     return {
         "ok": True,
         "id": existing.id,
@@ -181,7 +182,7 @@ def save_quiz_result(
         raise HTTPException(status_code=400, detail="Total must be greater than 0")
     if req.score > req.total:
         raise HTTPException(status_code=400, detail="Score cannot exceed total")
-    
+
     rec = QuizResult(
         user_id=current_user.id,
         module=req.module,
@@ -191,13 +192,15 @@ def save_quiz_result(
     db.add(rec)
     db.commit()
     db.refresh(rec)
-    
+
     return {
         "ok": True,
         "id": rec.id,
-        "at": rec.at.isoformat(),
-        "score": f"{req.score}/{req.total}",
-        "percentage": round((req.score / req.total * 100), 2) if req.total > 0 else 0
+        "module": rec.module,
+        "score": rec.score,
+        "total": rec.total,
+        "percentage": round((rec.score / rec.total * 100), 2) if rec.total > 0 else 0,
+        "at": rec.at.isoformat()
     }
 
 
@@ -241,14 +244,14 @@ def save_game_stat(
     db.add(rec)
     db.commit()
     db.refresh(rec)
-    
+
     return {
         "ok": True,
         "id": rec.id,
-        "at": rec.at.isoformat(),
-        "game": req.game,
-        "metric": req.metric,
-        "value": req.value
+        "game": rec.game,
+        "metric": rec.metric,
+        "value": rec.value,
+        "at": rec.at.isoformat()
     }
 
 
@@ -282,7 +285,7 @@ def save_learning_action(
     current_user: User = Depends(lambda: None),
     db: Session = Depends(get_db)
 ):
-    """Save learning action/activity"""
+    """Save learning action"""
     rec = LearningAction(
         user_id=current_user.id,
         module=req.module,
@@ -291,13 +294,13 @@ def save_learning_action(
     db.add(rec)
     db.commit()
     db.refresh(rec)
-    
+
     return {
         "ok": True,
         "id": rec.id,
-        "at": rec.at.isoformat(),
-        "module": req.module,
-        "action": req.action
+        "module": rec.module,
+        "action": rec.action,
+        "at": rec.at.isoformat()
     }
 
 
