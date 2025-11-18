@@ -129,7 +129,6 @@ def get_profile(
     }
 
 
-# ====== Include Routers ======
 # Auth endpoints: /auth/register, /auth/login, /auth/me, etc.
 app.include_router(auth_router)
 
