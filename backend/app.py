@@ -41,10 +41,6 @@ def get_db():
 @app.on_event("startup")
 async def startup_event():
     Base.metadata.create_all(bind=engine)
-    if not init_db():
-        print("⚠️ Database init failed – check DATABASE_URL")
-    else:
-        print("✅ Database initialized successfully")
     print(f"🚀 Server started on {datetime.now(timezone.utc).isoformat()}")
 
 # ====== Root/Health Endpoints ======
