@@ -15,7 +15,7 @@
 
       // --- Mode production ---
       // Railway backend (HARUS pakai https agar fetch() tidak gagal mixed content)
-      return "https://exquisite-clarity-production.up.railway.app";
+      return "https://tugas1pawm-production-7a65.up.railway.app";
     })(),
 
     REQUEST_TIMEOUT: 30000, // 30 detik timeout default

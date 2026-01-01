@@ -1,7 +1,8 @@
 // /js/api.js
 ;(() => {
-  // Ganti kalau perlu (tanpa trailing slash)
-  let BASE_URL = "https://exquisite-clarity-production.up.railway.app";
+  let BASE_URL =
+  (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) ||
+  "https://tugas1pawm-production-7a65.up.railway.app";
 
   // --- helpers --------------------------------------------------------------
   const isFormLike = (b) => b instanceof FormData || b instanceof URLSearchParams;
