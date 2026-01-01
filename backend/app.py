@@ -40,7 +40,7 @@ def get_db():
 # ====== Startup ======
 @app.on_event("startup")
 async def startup_event():
-    Base.metadata.create_all(bind=engine)
+    init_db()
     print(f"🚀 Server started on {datetime.now(timezone.utc).isoformat()}")
 
 # ====== Root/Health Endpoints ======
@@ -132,14 +132,6 @@ def get_profile(
 # Auth endpoints: /auth/register, /auth/login, /auth/me, etc.
 app.include_router(auth_router)
 
-# Progress endpoints: /progress/flashcard, /progress/quiz, etc.
-# Update dependency injection in progress router
-import progress as progress_module
-# Replace the lambda placeholder with actual auth dependency
-for route in progress_router.routes:
-    for idx, dependency in enumerate(route.dependant.dependencies):
-        if hasattr(dependency.call, '__name__') and 'lambda' in str(dependency.call):
-            route.dependant.dependencies[idx].call = get_current_user
 
 app.include_router(progress_router)
 

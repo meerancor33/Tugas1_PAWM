@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import Optional
 from pydantic import BaseModel, field_validator
+from auth import get_current_user
 
 from database import SessionLocal
 from models import User, FlashcardProgress, QuizResult, GameStat, LearningAction
@@ -104,7 +105,7 @@ class ProgressSummary(BaseModel):
 @router.post("/flashcard")
 def save_flashcard_progress(
     req: FlashcardReq,
-    current_user: User = Depends(lambda: None),  # Will be replaced by auth dependency
+    current_user: User = Depends(get_current_user),  # Will be replaced by auth dependency
     db: Session = Depends(get_db)
 ):
     """Save or update flashcard progress for a module"""
@@ -151,7 +152,7 @@ def save_flashcard_progress(
 @router.get("/flashcard")
 def get_flashcard_progress(
     module: Optional[str] = None,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get flashcard progress, optionally filtered by module"""
@@ -174,7 +175,7 @@ def get_flashcard_progress(
 @router.post("/quiz")
 def save_quiz_result(
     req: QuizReq,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Save quiz result"""
@@ -208,7 +209,7 @@ def save_quiz_result(
 def get_quiz_results(
     module: Optional[str] = None,
     limit: int = 100,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get quiz results, optionally filtered by module"""
@@ -231,7 +232,7 @@ def get_quiz_results(
 @router.post("/game")
 def save_game_stat(
     req: GameReq,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Save game statistics"""
@@ -259,7 +260,7 @@ def save_game_stat(
 def get_game_stats(
     game: Optional[str] = None,
     limit: int = 100,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get game statistics, optionally filtered by game name"""
@@ -282,7 +283,7 @@ def get_game_stats(
 @router.post("/learning")
 def save_learning_action(
     req: LearningReq,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Save learning action"""
@@ -308,7 +309,7 @@ def save_learning_action(
 def get_learning_actions(
     module: Optional[str] = None,
     limit: int = 100,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get learning actions, optionally filtered by module"""
@@ -330,7 +331,7 @@ def get_learning_actions(
 
 @router.get("/summary")
 def get_progress_summary(
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Get comprehensive progress summary for the user"""
@@ -430,7 +431,7 @@ def get_progress_summary(
 @router.delete("/flashcard/{progress_id}")
 def delete_flashcard_progress(
     progress_id: int,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Delete a specific flashcard progress record"""
@@ -451,7 +452,7 @@ def delete_flashcard_progress(
 @router.delete("/quiz/{quiz_id}")
 def delete_quiz_result(
     quiz_id: int,
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Delete a specific quiz result"""
@@ -471,7 +472,7 @@ def delete_quiz_result(
 
 @router.delete("/all")
 def delete_all_progress(
-    current_user: User = Depends(lambda: None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Delete all progress data for the current user"""
