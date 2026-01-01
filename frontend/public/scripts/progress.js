@@ -55,11 +55,11 @@
       if (total > 0 && progressKey !== lastReportedProgress) {
         API.fetchJSON("/progress/flashcard", {
           method: "POST",
-          body: JSON.stringify({
+          body: {
             module: moduleTitle,
             current: current,
             total: total
-          }),
+          },
         })
         .then(() => {
           console.log(`✅ Flashcard progress saved: ${moduleTitle} (${current}/${total})`)
@@ -114,12 +114,11 @@
         if (total > 0) {
           API.fetchJSON("/progress/quiz", {
             method: "POST",
-            body: JSON.stringify({
+            body: {
               module: subtitle,
               score,
-              total,
-              timestamp: formatIndonesianDate(new Date())
-            }),
+              total
+            },
           })
           .then(() => {
             console.log(`✅ Quiz result saved: ${subtitle} (${score}/${total})`)
@@ -166,12 +165,11 @@
           if (now - lastReportedTime > REPORT_COOLDOWN) {
             API.fetchJSON("/progress/game", {
               method: "POST",
-              body: JSON.stringify({
+              body: {
                 game: "acid-base-mixer",
                 metric: "completed",
-                value: 1,
-                timestamp: formatIndonesianDate(new Date())
-              }),
+                value: 1
+              },
             })
             .then(() => {
               console.log("✅ Game completion saved: Acid-Base Mixer")
@@ -210,12 +208,11 @@
           if (now - lastReportedTime > REPORT_COOLDOWN) {
             API.fetchJSON("/progress/game", {
               method: "POST",
-              body: JSON.stringify({
+              body: {
                 game: "periodic-table",
                 metric: "completed",
-                value: 1,
-                timestamp: formatIndonesianDate(new Date())
-              }),
+                value: 1
+              },
             })
             .then(() => {
               console.log("✅ Game completion saved: Periodic Table")
@@ -247,11 +244,10 @@
         
         API.fetchJSON("/progress/learning", {
           method: "POST",
-          body: JSON.stringify({
+          body: {
             module: moduleTitle,
-            action: kind,
-            timestamp: formatIndonesianDate(new Date())
-          }),
+            action: kind
+          },
         })
         .then(() => {
           console.log(`✅ Learning action saved: ${moduleTitle} - ${kind}`)
