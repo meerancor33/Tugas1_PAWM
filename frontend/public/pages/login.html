@@ -1,32 +1,55 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Masuk / Daftar - Virtual Learning</title>
-  <link rel="stylesheet" href="../styles/login.css">
+  <link rel="stylesheet" href="../styles/login.css" />
 </head>
+
 <body>
-  <div class="container">
-    <h1>Virtual Learning</h1>
-    <p>Masuk atau daftar untuk memulai pembelajaran.</p>
+  <div class="auth-page">
+    <div class="auth-card">
+      <!-- Toggle Tabs -->
+      <div class="toggle-wrap" role="tablist" aria-label="Masuk atau Daftar">
+        <button id="tabLogin" class="toggle-btn active" type="button" role="tab" aria-selected="true">
+          <span class="toggle-text">Masuk</span>
+        </button>
+        <button id="tabRegister" class="toggle-btn" type="button" role="tab" aria-selected="false">
+          <span class="toggle-text">Daftar</span>
+        </button>
+      </div>
 
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" id="email" placeholder="nama@contoh.com" required>
+      <h1 id="title" class="title">Masuk</h1>
+
+      <!-- Register-only -->
+      <div id="fullNameGroup" class="form-group hidden">
+        <label for="fullName">Nama Lengkap</label>
+        <input type="text" id="fullName" placeholder="Nama lengkap (opsional)" autocomplete="name" />
+      </div>
+
+      <!-- Common -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="nama@contoh.com" autocomplete="email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Kata Sandi</label>
+        <input type="password" id="password" placeholder="******" autocomplete="current-password" required />
+      </div>
+
+      <!-- Primary action -->
+      <button id="submitBtn" class="btn-primary" type="button">Masuk</button>
+
+      <!-- Helper -->
+      <p id="helper" class="helper">
+        Belum punya akun?
+        <button id="helperLink" class="helper-strong" type="button">Daftar</button>.
+      </p>
+
+      <p id="authMessage" class="message" aria-live="polite"></p>
     </div>
-
-    <div class="form-group">
-      <label for="password">Kata Sandi</label>
-      <input type="password" id="password" placeholder="******" required>
-    </div>
-
-    <div class="buttons">
-      <button id="loginBtn" class="btn-primary">Masuk</button>
-      <button id="registerBtn" class="btn-secondary">Daftar</button>
-    </div>
-
-    <p id="authMessage"></p>
   </div>
 
   <script src="../scripts/config.js"></script>
@@ -35,44 +58,187 @@
   <script src="../scripts/navbar-auth.js"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const navbar = document.querySelector('.navbar');
-      if (navbar) navbar.style.display = 'none'; // Hide navbar on login page
+    document.addEventListener("DOMContentLoaded", () => {
+      // Hide navbar on login page
+      const navbar = document.querySelector(".navbar");
+      if (navbar) navbar.style.display = "none";
 
-      const emailInput = document.getElementById('email');
-      const passwordInput = document.getElementById('password');
-      const msg = document.getElementById('authMessage');
+      const MODE = { LOGIN: "login", REGISTER: "register" };
+      let mode = MODE.LOGIN;
+      let loading = false;
 
-      document.getElementById('loginBtn').addEventListener('click', async () => {
-        const email = emailInput.value.trim();
+      const tabLogin = document.getElementById("tabLogin");
+      const tabRegister = document.getElementById("tabRegister");
+
+      const title = document.getElementById("title");
+      const fullNameGroup = document.getElementById("fullNameGroup");
+      const fullNameInput = document.getElementById("fullName");
+
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+
+      const submitBtn = document.getElementById("submitBtn");
+      const helper = document.getElementById("helper");
+      const helperLink = document.getElementById("helperLink");
+      const msg = document.getElementById("authMessage");
+
+      function setLoading(v) {
+        loading = !!v;
+
+        tabLogin.disabled = loading;
+        tabRegister.disabled = loading;
+        submitBtn.disabled = loading;
+        helperLink.disabled = loading;
+
+        submitBtn.textContent = loading
+          ? "Memproses..."
+          : (mode === MODE.LOGIN ? "Masuk" : "Buat Akun");
+
+        submitBtn.style.opacity = loading ? "0.75" : "1";
+      }
+
+      function setMessage(text, type) {
+        msg.textContent = text || "";
+        msg.classList.remove("is-error", "is-success");
+        if (type === "error") msg.classList.add("is-error");
+        if (type === "success") msg.classList.add("is-success");
+      }
+
+      function setMode(nextMode) {
+        mode = nextMode;
+
+        const isLogin = mode === MODE.LOGIN;
+
+        tabLogin.classList.toggle("active", isLogin);
+        tabRegister.classList.toggle("active", !isLogin);
+
+        tabLogin.setAttribute("aria-selected", isLogin ? "true" : "false");
+        tabRegister.setAttribute("aria-selected", !isLogin ? "true" : "false");
+
+        title.textContent = isLogin ? "Masuk" : "Daftar";
+
+        // show/hide full name on register
+        fullNameGroup.classList.toggle("hidden", isLogin);
+
+        // button text
+        submitBtn.textContent = isLogin ? "Masuk" : "Buat Akun";
+
+        // helper text
+        if (isLogin) {
+          helper.innerHTML = 'Belum punya akun? <button id="helperLink" class="helper-strong" type="button">Daftar</button>.';
+        } else {
+          helper.innerHTML = 'Setelah registrasi berhasil, kamu tetap perlu <button id="helperLink" class="helper-strong" type="button">login</button>.';
+        }
+
+        // rebind helperLink (karena innerHTML ganti)
+        const newHelperLink = document.getElementById("helperLink");
+        newHelperLink.addEventListener("click", () => {
+          if (loading) return;
+          setMessage("");
+          setMode(isLogin ? MODE.REGISTER : MODE.LOGIN);
+          if (mode === MODE.LOGIN) passwordInput.value = "";
+        });
+
+        setMessage("");
+      }
+
+      function isEmailValid(email) {
+        const e = String(email || "").trim().toLowerCase();
+        return e.includes("@") && e.includes(".");
+      }
+
+      function extractErrMessage(err) {
+        if (!err) return "Unknown error";
+        if (typeof err?.message === "string" && err.message.trim()) return err.message;
+        if (typeof err === "string") return err;
+        try { return JSON.stringify(err); } catch { return String(err); }
+      }
+
+      async function onSubmit() {
+        if (loading) return;
+
+        const email = emailInput.value.trim().toLowerCase();
         const password = passwordInput.value;
-        msg.textContent = '';
+
+        setMessage("");
+
+        if (!email || !password) {
+          setMessage("Email dan password harus diisi.", "error");
+          return;
+        }
+        if (!isEmailValid(email)) {
+          setMessage("Format email tidak valid.", "error");
+          return;
+        }
+
+        setLoading(true);
         try {
+          if (mode === MODE.REGISTER) {
+            if (String(password).length < 6) {
+              setMessage("Password minimal 6 karakter.", "error");
+              return;
+            }
+
+            const fullName = fullNameInput.value.trim();
+            await window.Auth.register(email, password, fullName || null);
+
+            setMessage("Registrasi berhasil. Silakan login menggunakan email & password kamu.", "success");
+            setMode(MODE.LOGIN);
+            passwordInput.value = "";
+            return;
+          }
+
+          // LOGIN
           const data = await window.Auth.login(email, password);
           if (data?.access_token) {
-            msg.textContent = 'Berhasil masuk. Mengarahkan ke Profil...';
+            setMessage("Berhasil masuk. Mengarahkan ke Profil...", "success");
             setTimeout(() => {
-              window.location.href = 'profile.html';
+              window.location.href = "profile.html";
             }, 700);
           } else {
-            throw new Error('Login gagal, token tidak ditemukan.');
+            throw new Error("Login gagal, token tidak ditemukan.");
           }
         } catch (e) {
-          msg.textContent = e.message || 'Gagal masuk.';
+          const m = extractErrMessage(e);
+
+          // biar mirip mobile: deteksi beberapa case umum
+          const alreadyTaken = /already|exists|dipakai|terdaftar|registered|duplicate|unique|integrity|409/i.test(m);
+          if (mode === MODE.REGISTER && alreadyTaken) {
+            setMessage("Email sudah terdaftar. Silakan login atau gunakan email lain.", "error");
+          } else if (mode === MODE.LOGIN && /401|unauthorized|invalid/i.test(m)) {
+            setMessage("Login gagal. Email atau password salah, atau akun belum terdaftar.", "error");
+          } else {
+            setMessage(m || "Terjadi kesalahan.", "error");
+          }
+
+          console.log("[auth error]", m);
+        } finally {
+          setLoading(false);
         }
+      }
+
+      // Bind tabs
+      tabLogin.addEventListener("click", () => {
+        if (loading) return;
+        setMode(MODE.LOGIN);
+      });
+      tabRegister.addEventListener("click", () => {
+        if (loading) return;
+        setMode(MODE.REGISTER);
       });
 
-      document.getElementById('registerBtn').addEventListener('click', async () => {
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        msg.textContent = '';
-        try {
-          await window.Auth.register(email, password);
-          msg.textContent = 'Pendaftaran berhasil. Anda dapat masuk sekarang.';
-        } catch (e) {
-          msg.textContent = e.message || 'Gagal mendaftar.';
-        }
+      // Bind submit
+      submitBtn.addEventListener("click", onSubmit);
+
+      // Submit on Enter
+      [fullNameInput, emailInput, passwordInput].forEach((inp) => {
+        inp.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") onSubmit();
+        });
       });
+
+      // Init default mode
+      setMode(MODE.LOGIN);
     });
   </script>
 </body>

@@ -32,7 +32,8 @@ body {
   transition: background-color 0.3s ease;
 }
 
-.header nav a:hover {
+.header 
+ a:hover {
   background-color: #34495e;
 }
 
