@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Profil Pengguna - Virtual Learning</title>
-  <link rel="stylesheet" href="../styles/index.css">
-  <link rel="stylesheet" href="../styles/profile.css">
+
+  <link rel="stylesheet" href="../styles/index.css" />
+  <link rel="stylesheet" href="../styles/profile.css" />
 </head>
 <body>
   <nav class="navbar">
@@ -23,35 +24,141 @@
     </div>
   </nav>
 
-  <main class="main-content">
-    <section class="container" style="max-width:1000px;margin:2rem auto;">
-      <h1>Profil Pengguna</h1>
-      <div id="userInfo" class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;margin-bottom:1rem;">
-        <p><strong>Email:</strong> <span id="userEmail">-</span></p>
-        <p><strong>Tanggal Daftar:</strong> <span id="userCreated">-</span></p>
+  <main class="profile-bg">
+    <section class="profile-wrap">
+
+      <!-- Header (glass) -->
+      <div class="header-card glass">
+        <div class="avatar">
+          <span class="avatar-text" id="avatarText">VL</span>
+        </div>
+
+        <div class="header-info">
+          <div class="profile-title">Profil</div>
+          <div class="profile-name" id="userName">Pengguna</div>
+          <div class="profile-meta" id="userEmail">-</div>
+          <div class="profile-meta" id="userCreated">Terdaftar • -</div>
+        </div>
+
+        <button class="logout-btn" id="btnLogout" type="button">Keluar</button>
       </div>
 
-      <section class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;">
-        <article class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;">
-          <h2>Progres Pembelajaran</h2>
-          <ul id="learningProgress"></ul>
-        </article>
+      <!-- Warning -->
+      <div class="warning-card glass hidden" id="warningBox">
+        <div class="warning-title">Info</div>
+        <div class="warning-text" id="warningText"></div>
+      </div>
 
-        <article class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;">
-          <h2>Flashcard</h2>
-          <ul id="flashcardProgress"></ul>
-        </article>
+      <!-- Skeleton -->
+      <div class="skel-wrap hidden" id="skelWrap">
+        <div class="stats-grid">
+          <div class="stat-card glass">
+            <div class="skel" style="width:55%;height:12px;border-radius:10px"></div>
+            <div style="height:10px"></div>
+            <div class="skel" style="width:35%;height:20px;border-radius:10px"></div>
+            <div style="height:10px"></div>
+            <div class="skel" style="width:45%;height:12px;border-radius:10px"></div>
+          </div>
+          <div class="stat-card glass">
+            <div class="skel" style="width:55%;height:12px;border-radius:10px"></div>
+            <div style="height:10px"></div>
+            <div class="skel" style="width:35%;height:20px;border-radius:10px"></div>
+            <div style="height:10px"></div>
+            <div class="skel" style="width:45%;height:12px;border-radius:10px"></div>
+          </div>
+          <div class="stat-card glass">
+            <div class="skel" style="width:55%;height:12px;border-radius:10px"></div>
+            <div style="height:10px"></div>
+            <div class="skel" style="width:35%;height:20px;border-radius:10px"></div>
+            <div style="height:10px"></div>
+            <div class="skel" style="width:45%;height:12px;border-radius:10px"></div>
+          </div>
+          <div class="stat-card glass">
+            <div class="skel" style="width:55%;height:12px;border-radius:10px"></div>
+            <div style="height:10px"></div>
+            <div class="skel" style="width:35%;height:20px;border-radius:10px"></div>
+            <div style="height:10px"></div>
+            <div class="skel" style="width:45%;height:12px;border-radius:10px"></div>
+          </div>
+        </div>
 
-        <article class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;">
-          <h2>Kuis</h2>
-          <ul id="quizResults"></ul>
-        </article>
+        <div class="panel-card glass">
+          <div class="skel" style="width:60%;height:14px;border-radius:10px"></div>
+          <div style="height:10px"></div>
+          <div class="skel" style="width:90%;height:12px;border-radius:10px"></div>
+          <div style="height:8px"></div>
+          <div class="skel" style="width:82%;height:12px;border-radius:10px"></div>
+          <div style="height:8px"></div>
+          <div class="skel" style="width:70%;height:12px;border-radius:10px"></div>
+        </div>
+      </div>
 
-        <article class="card" style="padding:1rem;border:1px solid #ddd;border-radius:8px;">
-          <h2>Games</h2>
-          <ul id="gameStats"></ul>
-        </article>
-      </section>
+      <!-- Content -->
+      <div id="contentWrap" class="hidden">
+        <!-- Quick stats -->
+        <div class="stats-grid">
+          <div class="stat-card glass">
+            <div class="stat-label">Aktivitas belajar</div>
+            <div class="stat-value" id="statLearning">0</div>
+            <div class="stat-chip"><span id="chipLearning">0 modul</span></div>
+          </div>
+
+          <div class="stat-card glass">
+            <div class="stat-label">Rata-rata flashcard</div>
+            <div class="stat-value" id="statFlashAvg">0%</div>
+            <div class="stat-chip"><span id="chipFlash">0 modul</span></div>
+          </div>
+
+          <div class="stat-card glass">
+            <div class="stat-label">Kuis (best)</div>
+            <div class="stat-value" id="statQuizBest">0%</div>
+            <div class="stat-chip"><span id="chipQuiz">avg 0%</span></div>
+          </div>
+
+          <div class="stat-card glass">
+            <div class="stat-label">Games selesai</div>
+            <div class="stat-value" id="statGames">0</div>
+            <div class="stat-chip"><span>total completion</span></div>
+          </div>
+        </div>
+
+        <!-- Segmented tabs -->
+        <div class="segment-wrap glass">
+          <div class="segment-row" id="segmentRow">
+            <button class="segment-item active" data-tab="learning" type="button">
+              <span class="seg-icon">📚</span><span class="seg-text">Pembelajaran</span>
+            </button>
+            <button class="segment-item" data-tab="flashcards" type="button">
+              <span class="seg-icon">🃏</span><span class="seg-text">Flashcard</span>
+            </button>
+            <button class="segment-item" data-tab="quizzes" type="button">
+              <span class="seg-icon">📝</span><span class="seg-text">Kuis</span>
+            </button>
+            <button class="segment-item" data-tab="games" type="button">
+              <span class="seg-icon">🎮</span><span class="seg-text">Games</span>
+            </button>
+          </div>
+
+          <!-- Fade hints -->
+          <div class="fade fade-left hidden" id="fadeLeft"></div>
+          <div class="fade fade-right hidden" id="fadeRight"></div>
+        </div>
+
+        <div class="swipe-hint">Geser kanan/kiri pada tab untuk melihat opsi lainnya.</div>
+
+        <!-- Panel -->
+        <div class="panel">
+          <div class="section-head">
+            <div class="section-title" id="sectionTitle">Progres Pembelajaran</div>
+            <div class="section-sub" id="sectionSub">Riwayat aksi pada modul pembelajaran</div>
+          </div>
+
+          <div class="panel-card glass" id="panelCard">
+            <!-- injected by JS -->
+          </div>
+        </div>
+      </div>
+
     </section>
   </main>
 

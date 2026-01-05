@@ -1,238 +1,426 @@
-;(async () => {
-  // Cek apakah user sudah login
-  if (!window.Auth?.isLoggedIn()) {
-    location.href = "login.html"
-    return
+;(() => {
+  const API = window.API;
+  const Auth = window.Auth;
+
+  const $ = (id) => document.getElementById(id);
+
+  const el = {
+    avatarText: $("avatarText"),
+    userName: $("userName"),
+    userEmail: $("userEmail"),
+    userCreated: $("userCreated"),
+    btnLogout: $("btnLogout"),
+
+    warningBox: $("warningBox"),
+    warningText: $("warningText"),
+
+    skelWrap: $("skelWrap"),
+    contentWrap: $("contentWrap"),
+
+    statLearning: $("statLearning"),
+    chipLearning: $("chipLearning"),
+    statFlashAvg: $("statFlashAvg"),
+    chipFlash: $("chipFlash"),
+    statQuizBest: $("statQuizBest"),
+    chipQuiz: $("chipQuiz"),
+    statGames: $("statGames"),
+
+    segmentRow: $("segmentRow"),
+    fadeLeft: $("fadeLeft"),
+    fadeRight: $("fadeRight"),
+
+    sectionTitle: $("sectionTitle"),
+    sectionSub: $("sectionSub"),
+    panelCard: $("panelCard"),
+  };
+
+  function showWarning(msg) {
+    if (!msg) {
+      el.warningBox.classList.add("hidden");
+      el.warningText.textContent = "";
+      return;
+    }
+    el.warningText.textContent = msg;
+    el.warningBox.classList.remove("hidden");
   }
 
-  // Show loading state
-  const showLoading = (show) => {
-    const elements = ["userEmail", "userCreated"]
-    elements.forEach((id) => {
-      const el = document.getElementById(id)
-      if (el) el.textContent = show ? "Memuat..." : "-"
-    })
+  function setLoading(isLoading) {
+    if (isLoading) {
+      el.skelWrap.classList.remove("hidden");
+      el.contentWrap.classList.add("hidden");
+    } else {
+      el.skelWrap.classList.add("hidden");
+      el.contentWrap.classList.remove("hidden");
+    }
   }
 
-  showLoading(true)
-
-  const API = window.API
-  if (!API) {
-    console.error("API belum dimuat. Pastikan config.js dan api.js dimuat sebelum profile.js")
-    alert("Konfigurasi API belum dimuat. Muat ulang halaman.")
-    throw new Error("API not loaded")
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
-  try {
-    // Fetch profile data dari backend
-    const data = await API.fetchJSON("/profile")
-
-    // Update user info
-    const email = data?.user?.email || window.Auth.getUser()?.email || "-"
-    const created = data?.user?.created_at || window.Auth.getUser()?.created_at || "-"
-
-    document.getElementById("userEmail").textContent = email
-
-    // Format tanggal dengan lebih baik
+  function formatDateID(iso) {
+    if (!iso) return "-";
     try {
-      const createdDate = new Date(created)
-      document.getElementById("userCreated").textContent = createdDate.toLocaleDateString("id-ID", {
+      return new Date(iso).toLocaleString("id-ID", {
         year: "numeric",
         month: "long",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      })
-    } catch (e) {
-      document.getElementById("userCreated").textContent = created
-    }
-
-    // Helper function untuk render list
-    function renderList(elementId, items, mapper) {
-      const ul = document.getElementById(elementId)
-      if (!ul) return
-
-      ul.innerHTML = ""
-
-      if (!items || items.length === 0) {
-        const li = document.createElement("li")
-        li.textContent = "Belum ada data"
-        li.style.color = "#999"
-        li.style.fontStyle = "italic"
-        ul.appendChild(li)
-        return
-      }
-
-      items.forEach((item) => {
-        const li = document.createElement("li")
-        const mapped = mapper(item)
-
-        if (mapped instanceof Node) {
-          li.appendChild(mapped)
-        } else {
-          li.textContent = String(mapped)
-        }
-
-        li.style.marginBottom = "0.5rem"
-        ul.appendChild(li)
-      })
-    }
-
-    // Render learning progress
-    renderList("learningProgress", data.learning || [], (item) => {
-      const date = new Date(item.at).toLocaleString("id-ID")
-      return `${item.module} • ${item.action} • ${date}`
-    })
-
-    // Render flashcard progress - ambil progress terbaru per modul
-    const flashcardsByModule = {}
-    ;(data.flashcards || []).forEach((item) => {
-      const module = item.module || "Modul"
-      const timestamp = new Date(item.at).getTime()
-      
-      // Simpan hanya yang terbaru per modul
-      if (!flashcardsByModule[module] || 
-          new Date(flashcardsByModule[module].at).getTime() < timestamp) {
-        flashcardsByModule[module] = item
-      }
-    })
-
-    const latestFlashcards = Object.values(flashcardsByModule)
-    
-    renderList("flashcardProgress", latestFlashcards, (item) => {
-      const current = Number(item.current || 0)
-      const total = Math.max(1, Number(item.total || 0))
-      const pct = Math.max(0, Math.min(100, Math.round((current / total) * 100)))
-
-      const wrapper = document.createElement("div")
-      wrapper.style.display = "flex"
-      wrapper.style.flexDirection = "column"
-      wrapper.style.gap = "0.25rem"
-
-      const header = document.createElement("div")
-      header.style.display = "flex"
-      header.style.justifyContent = "space-between"
-      header.style.alignItems = "center"
-
-      const title = document.createElement("span")
-      title.textContent = item.module || "Modul"
-
-      const percent = document.createElement("span")
-      percent.textContent = pct + "%"
-      percent.style.fontWeight = "600"
-      percent.style.color = pct === 100 ? "#10b981" : "#6b7280"
-
-      header.appendChild(title)
-      header.appendChild(percent)
-
-      const bar = document.createElement("div")
-      bar.setAttribute("role", "progressbar")
-      bar.setAttribute("aria-valuemin", "0")
-      bar.setAttribute("aria-valuemax", "100")
-      bar.setAttribute("aria-valuenow", String(pct))
-      bar.style.width = "100%"
-      bar.style.height = "8px"
-      bar.style.background = "#e5e7eb"
-      bar.style.borderRadius = "9999px"
-      bar.style.overflow = "hidden"
-
-      const fill = document.createElement("div")
-      fill.style.width = pct + "%"
-      fill.style.height = "100%"
-      fill.style.background = pct === 100 ? "#10b981" : "#3b82f6"
-      fill.style.borderRadius = "9999px"
-      fill.style.transition = "width 0.3s ease"
-
-      bar.appendChild(fill)
-
-      const sub = document.createElement("span")
-      sub.textContent = `${current}/${total} kartu`
-      sub.style.fontSize = "12px"
-      sub.style.color = "#6b7280"
-
-      wrapper.appendChild(header)
-      wrapper.appendChild(bar)
-      wrapper.appendChild(sub)
-      return wrapper
-    })
-
-    // Render quiz results
-    renderList("quizResults", data.quizzes || [], (item) => {
-      const score = Number(item.score || 0)
-      const total = Math.max(1, Number(item.total || 0))
-      const percentage = Math.round((score / total) * 100)
-      return `${item.module || "Kuis"} — ${score}/${total} (${percentage}%)`
-    })
-
-    // Render game stats
-    ;(() => {
-      const games = data.games || []
-      const completedByGame = games
-        .filter((g) => (g.metric || "").toLowerCase() === "completed")
-        .reduce((acc, g) => {
-          const key = (g.game || "game").toLowerCase()
-          const val = Number(g.value || 0)
-          acc[key] = (acc[key] || 0) + (isNaN(val) ? 0 : val)
-          return acc
-        }, {})
-
-      // Mapping nama ramah pengguna
-      const pretty = (key) => {
-        if (key === "acid-base-mixer") return "Acid-Base Mixer"
-        if (key === "periodic-table") return "Periodic Table"
-        return key.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-      }
-
-      const summaryItems = Object.keys(completedByGame).map((k) => ({
-        label: `${pretty(k)} — ${completedByGame[k]}x selesai`,
-      }))
-
-      const elementId = "gameStats"
-      const ul = document.getElementById(elementId)
-      if (!ul) return
-
-      ul.innerHTML = ""
-
-      if (summaryItems.length === 0) {
-        const li = document.createElement("li")
-        li.textContent = "Belum ada data"
-        li.style.color = "#999"
-        li.style.fontStyle = "italic"
-        ul.appendChild(li)
-      } else {
-        summaryItems.forEach(({ label }) => {
-          const li = document.createElement("li")
-          li.textContent = label
-          li.style.marginBottom = "0.5rem"
-          ul.appendChild(li)
-        })
-      }
-    })()
-
-    console.log("✅ Profile loaded successfully:", data)
-  } catch (error) {
-    console.error("❌ Error loading profile:", error)
-
-    showLoading(false)
-
-    // Tampilkan pesan error yang lebih informatif
-    let errorMessage = "Gagal memuat profil. "
-
-    if (error.message.includes("Failed to fetch")) {
-      errorMessage += "Backend tidak dapat dijangkau. Pastikan backend berjalan di http://localhost:8000"
-    } else if (error.message.includes("Unauthorized") || error.message.includes("401")) {
-      errorMessage += "Sesi Anda telah berakhir. Silakan login kembali."
-    } else {
-      errorMessage += error.message || "Silakan muat ulang halaman."
-    }
-
-    alert(errorMessage)
-
-    // Jika error unauthorized, redirect ke login
-    if (error.message.includes("Unauthorized") || error.message.includes("401")) {
-      setTimeout(() => {
-        location.href = "login.html"
-      }, 1000)
+      });
+    } catch {
+      return iso;
     }
   }
-})()
+
+  function clampPct(p) {
+    const n = Math.round(Number(p) || 0);
+    return Math.max(0, Math.min(100, n));
+  }
+
+  function getInitials(nameOrEmail) {
+    const s = String(nameOrEmail || "").trim();
+    if (!s) return "VL";
+    if (s.includes("@")) return s.slice(0, 2).toUpperCase();
+    const parts = s.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  function latestFlashcardsPerModule(items = []) {
+    const map = new Map();
+    items.forEach((it) => {
+      const mod = it.module || "Modul";
+      const prev = map.get(mod);
+      const t = new Date(it.at).getTime();
+      const pt = prev ? new Date(prev.at).getTime() : -1;
+      if (!prev || t > pt) map.set(mod, it);
+    });
+    return Array.from(map.values());
+  }
+
+  function sumLearning(items = []) {
+    const total = items.length;
+    const modules = new Set(items.map((x) => x.module));
+    return { totalActions: total, uniqueModules: modules.size };
+  }
+
+  function quizSummary(items = []) {
+    if (!items.length) return { attempts: 0, bestPct: 0, avgPct: 0 };
+    const pcts = items.map((q) => clampPct((Number(q.score || 0) / Math.max(1, Number(q.total || 0))) * 100));
+    const best = Math.max(...pcts);
+    const avg = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
+    return { attempts: items.length, bestPct: best, avgPct: avg };
+  }
+
+  function gamesSummary(items = []) {
+    const completed = items.filter((g) => String(g.metric || "").toLowerCase() === "completed");
+    const totalCompletions = completed.reduce((acc, g) => acc + (Number(g.value || 0) || 0), 0);
+
+    const byGame = new Map();
+    completed.forEach((g) => {
+      const k = String(g.game || "game").toLowerCase();
+      byGame.set(k, (byGame.get(k) || 0) + (Number(g.value || 0) || 0));
+    });
+
+    const top = Array.from(byGame.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([k, v]) => ({ game: k, count: v }));
+
+    return { totalCompletions, top };
+  }
+
+  function prettyGameName(key) {
+    if (key === "acid-base-mixer") return "Acid-Base Mixer";
+    if (key === "periodic-table") return "Periodic Table";
+    return String(key || "game")
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  async function fetchProfileFromBackend() {
+    // 1) coba /profile
+    let prof = null;
+    try {
+      prof = await Auth.getProfile(); // sudah handle auth+token
+    } catch (e) {
+      prof = {};
+    }
+
+    const out = { ...prof };
+
+    const needLearning = !Array.isArray(out.learning);
+    const needFlashcards = !Array.isArray(out.flashcards);
+    const needQuizzes = !Array.isArray(out.quizzes);
+    const needGames = !Array.isArray(out.games);
+
+    // fallback ke endpoint progress lama (format { ok, count, data })
+    if (needLearning) {
+      const r = await Auth.fetchProtected("/progress/learning?limit=100", { method: "GET" });
+      out.learning = r?.data ?? [];
+    }
+    if (needFlashcards) {
+      const r = await Auth.fetchProtected("/progress/flashcard", { method: "GET" });
+      out.flashcards = r?.data ?? [];
+    }
+    if (needQuizzes) {
+      const r = await Auth.fetchProtected("/progress/quiz?limit=100", { method: "GET" });
+      out.quizzes = r?.data ?? [];
+    }
+    if (needGames) {
+      const r = await Auth.fetchProtected("/progress/game?limit=100", { method: "GET" });
+      out.games = r?.data ?? [];
+    }
+
+    // pastikan user minimal ada dari cache (Auth.login sudah simpan)
+    if (!out.user) {
+      const u = Auth.getUser?.();
+      out.user = {
+        email: u?.email || localStorage.getItem("user_email") || "-",
+        full_name: u?.fullName || localStorage.getItem("user_name") || "Pengguna",
+        created_at: u?.created_at || localStorage.getItem("user_created") || null,
+      };
+    }
+
+    return out;
+  }
+
+  function renderRowItem({ title, right, sub }) {
+    return `
+      <div class="row-item">
+        <div class="row-left">
+          <div class="row-title">${escapeHtml(title)}</div>
+          ${sub ? `<div class="row-sub">${escapeHtml(sub)}</div>` : ""}
+        </div>
+        <div class="row-right">${escapeHtml(right)}</div>
+      </div>
+    `;
+  }
+
+  function renderEmpty(text) {
+    return `<div class="empty">${escapeHtml(text)}</div>`;
+  }
+
+  function renderFlashProgress(it) {
+    const total = Math.max(1, Number(it.total || 0));
+    const cur = Math.max(0, Number(it.current || 0));
+    const pct = clampPct((cur / total) * 100);
+
+    return `
+      <div class="progress-block">
+        <div class="progress-top">
+          <div class="row-title">${escapeHtml(it.module || "Modul")}</div>
+          <div class="progress-pct">${pct}%</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="progress-sub">${cur}/${total} kartu • update ${escapeHtml(formatDateID(it.at))}</div>
+      </div>
+    `;
+  }
+
+  function renderSummaryChip(label, value) {
+    return `
+      <div class="summary-chip">
+        <div class="summary-label">${escapeHtml(label)}</div>
+        <div class="summary-value">${escapeHtml(value)}</div>
+      </div>
+    `;
+  }
+
+  function setActiveTab(tabKey) {
+    const buttons = el.segmentRow.querySelectorAll(".segment-item");
+    buttons.forEach((b) => b.classList.toggle("active", b.dataset.tab === tabKey));
+  }
+
+  function renderTab(tabKey, data) {
+    const learning = data.learning || [];
+    const flashcards = latestFlashcardsPerModule(data.flashcards || []);
+    const quizzes = data.quizzes || [];
+    const games = data.games || [];
+
+    if (tabKey === "learning") {
+      el.sectionTitle.textContent = "Progres Pembelajaran";
+      el.sectionSub.textContent = "Riwayat aksi pada modul pembelajaran";
+      el.panelCard.innerHTML =
+        learning.length === 0
+          ? renderEmpty("Belum ada aktivitas pembelajaran.")
+          : learning.slice(0, 12).map((it) =>
+              renderRowItem({
+                title: it.module || "Modul",
+                right: it.action || "-",
+                sub: formatDateID(it.at),
+              })
+            ).join("");
+      return;
+    }
+
+    if (tabKey === "flashcards") {
+      el.sectionTitle.textContent = "Flashcard";
+      el.sectionSub.textContent = "Progres terbaru per modul";
+      el.panelCard.innerHTML =
+        flashcards.length === 0
+          ? renderEmpty("Belum ada progres flashcard.")
+          : flashcards.map(renderFlashProgress).join("");
+      return;
+    }
+
+    if (tabKey === "quizzes") {
+      const qs = quizSummary(quizzes);
+      el.sectionTitle.textContent = "Kuis";
+      el.sectionSub.textContent = "Skor & ringkasan performa";
+
+      const summaryHtml = `
+        <div class="summary-row">
+          ${renderSummaryChip("Percobaan", String(qs.attempts))}
+          ${renderSummaryChip("Best", `${qs.bestPct}%`)}
+          ${renderSummaryChip("Rata-rata", `${qs.avgPct}%`)}
+        </div>
+        <div style="height:12px"></div>
+      `;
+
+      const listHtml =
+        quizzes.length === 0
+          ? renderEmpty("Belum ada hasil kuis.")
+          : quizzes.slice(0, 12).map((q) => {
+              const total = Math.max(1, Number(q.total || 0));
+              const score = Math.max(0, Number(q.score || 0));
+              const pct = clampPct((score / total) * 100);
+              return renderRowItem({
+                title: q.module || "Kuis",
+                right: `${score}/${total} (${pct}%)`,
+                sub: q.at ? formatDateID(q.at) : "",
+              });
+            }).join("");
+
+      el.panelCard.innerHTML = summaryHtml + listHtml;
+      return;
+    }
+
+    // games
+    const gs = gamesSummary(games);
+    el.sectionTitle.textContent = "Games";
+    el.sectionSub.textContent = "Total completion & game teratas";
+
+    const summaryHtml = `
+      <div class="summary-row">
+        ${renderSummaryChip("Total selesai", String(gs.totalCompletions))}
+      </div>
+      <div style="height:12px"></div>
+    `;
+
+    const listHtml =
+      gs.totalCompletions === 0
+        ? renderEmpty("Belum ada progress games.")
+        : gs.top.map((g) =>
+            renderRowItem({
+              title: prettyGameName(g.game),
+              right: `${g.count}x`,
+              sub: "completed",
+            })
+          ).join("");
+
+    el.panelCard.innerHTML = summaryHtml + listHtml;
+  }
+
+  function updateFadeHints() {
+    const row = el.segmentRow;
+    if (!row) return;
+
+    const max = Math.max(0, row.scrollWidth - row.clientWidth);
+    const x = row.scrollLeft;
+
+    el.fadeLeft.classList.toggle("hidden", !(x > 6));
+    el.fadeRight.classList.toggle("hidden", !(max - x > 6));
+  }
+
+  function fillHeaderAndStats(data) {
+    const user = data.user || {};
+    const email = user.email || localStorage.getItem("user_email") || "-";
+    const name = user.full_name || localStorage.getItem("user_name") || "Pengguna";
+    const createdAt = user.created_at || localStorage.getItem("user_created") || null;
+
+    el.userName.textContent = name;
+    el.userEmail.textContent = email;
+    el.userCreated.textContent = `Terdaftar • ${formatDateID(createdAt)}`;
+    el.avatarText.textContent = getInitials(name || email);
+
+    const learning = data.learning || [];
+    const flashcards = latestFlashcardsPerModule(data.flashcards || []);
+    const quizzes = data.quizzes || [];
+    const games = data.games || [];
+
+    const ls = sumLearning(learning);
+    const qs = quizSummary(quizzes);
+    const gs = gamesSummary(games);
+
+    const flashAvg = (() => {
+      if (!flashcards.length) return 0;
+      const pcts = flashcards.map((f) =>
+        clampPct((Number(f.current || 0) / Math.max(1, Number(f.total || 0))) * 100)
+      );
+      return Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
+    })();
+
+    el.statLearning.textContent = String(ls.totalActions);
+    el.chipLearning.textContent = `${ls.uniqueModules} modul`;
+
+    el.statFlashAvg.textContent = `${flashAvg}%`;
+    el.chipFlash.textContent = `${flashcards.length} modul`;
+
+    el.statQuizBest.textContent = `${qs.bestPct}%`;
+    el.chipQuiz.textContent = `avg ${qs.avgPct}%`;
+
+    el.statGames.textContent = String(gs.totalCompletions);
+  }
+
+  async function init() {
+    if (!Auth?.isLoggedIn?.()) {
+      Auth?.logout?.();
+      return;
+    }
+
+    setLoading(true);
+    showWarning(null);
+
+    try {
+      const data = await fetchProfileFromBackend();
+      fillHeaderAndStats(data);
+
+      // default tab
+      const defaultTab = "learning";
+      setActiveTab(defaultTab);
+      renderTab(defaultTab, data);
+
+      // tab click handler
+      el.segmentRow.addEventListener("click", (e) => {
+        const btn = e.target.closest(".segment-item");
+        if (!btn) return;
+        const tabKey = btn.dataset.tab;
+        setActiveTab(tabKey);
+        renderTab(tabKey, data);
+      });
+
+      // fade hint tabs
+      updateFadeHints();
+      el.segmentRow.addEventListener("scroll", updateFadeHints, { passive: true });
+      window.addEventListener("resize", updateFadeHints);
+
+      // logout
+      el.btnLogout.addEventListener("click", () => Auth.logout());
+    } catch (e) {
+      showWarning(`Gagal memuat profile. (${e?.message || e})`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
